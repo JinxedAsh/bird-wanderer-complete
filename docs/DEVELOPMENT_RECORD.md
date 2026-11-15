@@ -871,6 +871,72 @@ The header logo now uses a bundled SVG following the supplied green bird emblem,
 
 **Plain flow/Viva:** touch gesture or Refresh button -> existing App reload request -> authenticated records API -> replace displayed records on success. This refreshes server data without a full page reload or forced sign-out; it is separate from live push delivery. Current Android preview loads this frontend from its selected server, so no APK change is required for this increment.
 
+### Entry 50 — Firebase console and Android preview registration checkpoint
+
+**Date/group:** 27 October 2026 IST; real notification setup. **Status:** work in progress; no provider/device delivery claim.
+
+**Confirmed setup:** the authenticated Firebase console shows the existing `bird-wanderer` project on the Spark plan, initially with no registered apps. After explicit action-time confirmation, registered Android preview package `org.birdwanderer.app.debug` as Bird Wanderer Android Preview. The resulting app settings and completed registration step were observed. No billing upgrade, new provider account or deployment occurred.
+
+**Local checks:** inspected Git/configuration, existing native Gradle integration, the shared sender and setup documentation. `android/firebase.properties` remains absent; server Firebase entries are absent. Both local configuration paths are Git-ignored. The existing laptop server remains running; no process was stopped/restarted. ADB reported no connected device. Remote main remained at b9ae943 and the refresh branch at 1df2105; no merge is inferred. Preserved unrelated acceptance edits, Test.ps1 and docs/test-cases.
+
+**Boundary and next action:** public Android configuration download was attempted twice but the browser tool returned no download event/file; a manual download is needed. Web/release registration, credentials outside the repository, configured APK rebuild, signature-compatible installation, deliberate opt-in and foreground/background receipt remain pending. No credentials, device tokens or private data are recorded here. No runtime source changed or automated regression tests ran for this documentation/configuration checkpoint. See NATIVE_PUSH_WALKTHROUGH.md for the resume sequence. The user's physical-testing report is accepted as user-reported, without inventing a detailed device/provider evidence log; laptop hosting is retained, permanent hosting and SMTP deferred.
+
+### Entry 51 — Public Firebase configuration and private-key handoff
+
+**Date/group:** 27 October 2026 IST; real notification setup. **Status:** work in progress.
+
+**Configured locally:** verified the user's downloaded Android configuration matches the existing project and preview package, then populated ignored android/firebase.properties. Parsed back and matched all four preview values; release remains unconfigured. With explicit confirmations, registered Bird Wanderer Web without Hosting and generated the project's Web Push key pair. Saved only the required public Web fields and public VAPID key to ignored frontend/.env. Cloud Messaging V1 is observed enabled. No generic SDK/analytics snippet, dependency or authentication rewrite was added.
+
+**Verification and remaining work:** configured debug unit/lint/build tasks passed: nine native tests, zero failures/errors/skips; lint zero errors/two warnings; successful debug assembly. Copied the configured APK to Downloads under a separate Firebase preview name, preserving the earlier delivered file. SHA-256 and signing evidence are in NATIVE_PUSH_WALKTHROUGH.md. The local signer differs from the delivered CI APK, so an in-place replacement of that CI package would be incompatible. No uninstall or installation was attempted. Private server credentials remain absent; prepared the final Generate key dialog for user confirmation. No server restart, live token or provider/device receipt occurred. Existing local changes remain preserved. User requested autonomous handling of routine steps; private credential creation retains the computer-use tool's action-time security confirmation requirement. No key contents are recorded in shared documentation.
+
+### Entry 52 — Real Firebase credential authentication and laptop server activation
+
+**Date/group:** 27 October 2026 IST; provider configuration. **Status:** server configured; actual notification delivery pending.
+
+**Setup:** the user saved the generated private service-account file locally. Verified its service-account type and project identity, copied it outside the repository, and saved only the path in ignored frontend/.env. Existing configuredPush initialized with the matching Web identity/VAPID configuration and obtained a Google OAuth access token. Neither credentials nor tokens were printed or added to shared files. Authentication success does not establish FCM send authorization or delivery.
+
+**Runtime checks:** read-only database checks found zero push devices and zero pending deliveries before activation. Requested the existing API watcher to reload. After the old dev supervisor ended during reload, restarted only this project's dev supervisor with hidden-window logs outside the repository. Added the current exact Wi-Fi origin to the existing allowed-origin list and reloaded. Verified LAN frontend 200, empty-login validation 400 and unauthenticated push-config 401. Earlier request to an incorrect alerts route returned 404; corrected it using the actual observations router mount. No application source content changed, records/accounts/media were preserved, and no test notification was sent.
+
+**Device boundary:** the configured preview APK already passed the native checks recorded in Entry51. Its signer differs from the previously delivered CI preview; ADB still shows no attached phone. The next step is to connect/inspect the Oppo before selecting a data-preserving installation path, then exercise deliberate opt-in and foreground/background delivery through the app. Android Studio setup is not required because the existing portable toolchain is working. Real token/provider/device receipt remains unverified.
+
+### Entry 53 — Physical Oppo connection and signature-safe replacement preparation
+
+**Date/group:** 27 October 2026 IST; Android handoff. **Status:** device inspection/backup complete; replacement awaiting approval.
+
+**Observed device evidence:** Windows detects OPPO K13 5G; after the user enabled/authorized USB debugging, ADB reports the attached CPH2729 device. It runs Android16/API36. Installed org.birdwanderer.app.debug is version0.1.0-debug/code1. Pulled its APK and verified its CI certificate matches the previously delivered preview, differing from the configured local build. This is direct installation/signature evidence, not notification receipt.
+
+**Preservation:** force-stopped only Bird Wanderer and saved its original APK plus a private app-data TAR outside the repository. Backup includes shared preferences, WebView data, files and no_backup; 8,635,392 bytes, 72 archive entries, zero backup stderr, valid TAR listing. No private contents entered chat/docs/Git. Server database/account/media remain untouched. The archive does not guarantee successful cookie/keystore restoration. The app remains installed; no uninstall, configured installation, restore, opt-in or provider send occurred. Explicit approval is required for replacement because Android rejects updates signed by a different key; the user may need to sign in again even after restoration.
+
+### Entry 54 — Configured preview installed and restored; stale tunnel isolated
+
+**Date/group:** 27 October 2026 IST; physical Android setup. **Status:** configured APK installed; current-server reconnection and push acceptance pending.
+
+**Approved replacement:** after explicit user approval, uninstalled the old preview and installed the locally configured Firebase APK. Both ADB operations succeeded. Preserved the original APK/private laptop archive and server records. Direct binary-stream restore failed with tar EOF/illegal seek; transferred the archive to ADB's temporary directory, restored via on-device cat/run-as tar (successful exit), removed only that temporary archive, and launched MainActivity. No private archive data was printed or committed. Initial preferences were demonstrably restored, but a working login session is not claimed.
+
+**Observed blocker:** the restored preference uses an old public tunnel that is no longer reachable. Read-only phone UI inspection shows the native connection-recovery screen. The user was instructed to enter the current same-Wi-Fi origin through Save and open; changing origins intentionally signs out, while server data remains intact. Laptop frontend/protected endpoint checks remain separate from phone acceptance. No Firebase opt-in, registration token, provider message or foreground/background receipt has yet been observed.
+
+### Entry 55 — Replacement temporary HTTPS tunnel verified
+
+**Date/group:** 27 October 2026 IST; phone reconnection. **Status:** user-operated tunnel and server configuration verified; phone sign-in/push acceptance pending.
+
+**Issue and fix:** Start-Tunnel.ps1 also starts the dev server, conflicting with the already-running frontend on port3000. Read-only inspection confirmed the port belongs to this project's Vite process. Directed the user to start only cloudflared forwarding to the existing frontend; automatic approval review had blocked agent-started public tunnel creation. The user supplied the new tunnel URL. Configured only its exact origin in ignored TUNNEL_ORIGIN, reusing existing frontend-host/API-origin handling, and requested API watcher reload. No unrelated server or tunnel process was stopped.
+
+**Observed checks:** through the user-provided public HTTPS origin, frontend200, empty-login validation400 (origin accepted), protected push-config401. Vite process remained running. No actual password, token or private key was used in these checks. Tunnel lifetime depends on the user's terminal/network/laptop; phone reconnection, explicit push opt-in and actual foreground/background receipt are still pending. Permanent hosting and a built-in stable server address are deferred until after current notification setup.
+
+### Entry 56 — Real phone opt-in and server registration observed
+
+**Date/group:** 27 October 2026 IST; physical Firebase setup. **Status:** real opt-in/device registration confirmed; message delivery pending.
+
+**Direct evidence:** after the user signed in and deliberately enabled push, phone UI shows Disable push on this device and Android package inspection reports POST_NOTIFICATIONS granted. Read-only database checks show one registered device, matching account master sighting alerts enabled, zero subscriptions for that account and no delivery rows. No tokens/session identifiers were displayed. This establishes actual SDK/server registration and OS permission, not provider send or foreground/background receipt. The next step is a species/hotspot subscription and an application-flow delivery check limited to the opted-in phone.
+
+### Entry 57 — Custom-domain setup prioritized before remaining push checks
+
+**Date/group:** 28 October 2026 IST; stable demo access. **Status:** setup in progress; no DNS or account changes yet.
+
+**User decision:** the user purchased birdwanderer.in at GoDaddy and requested domain setup before finishing Firebase delivery checks. Retain the laptop-backed server for now and prepare a stable HTTPS hostname using Cloudflare DNS/named tunnel; permanent backend hosting remains separate. Resume the outstanding subscription/foreground/background checks afterward. Prior Firebase registration evidence remains valid as dated evidence, not a fresh delivery claim.
+
+**Read-only orientation:** existing tunnel helper already supports an exact separately managed HTTPS origin. Cloudflare's current documentation requires adding the domain to Cloudflare before publishing through its tunnel. Local DNS plus Google/Cloudflare public DNS queries returned NXDOMAIN for birdwanderer.in at this checkpoint; this does not by itself establish purchase/registration status. Cloudflare dashboard opens at sign-in, so authenticated account/zone inspection awaits user login. No registrar transfer, DNS record/nameserver change, paid plan, persistent tunnel credential, runtime configuration change or new deployment has occurred. Preserve unrelated local edits and the current user-owned temporary tunnel.
+
 ### Entry 58 — Optional mailbox verification while preserving login
 
 **Date/group:**29 October2026 IST; account continuity. **Status:** implemented and scoped browser-tested on `email-verification`;159 tests/type/build pass. Delivery is tracked in [PR #43](https://github.com/JinxedAsh/bird-wanderer/pull/43); real SMTP/inbox receipt remains pending.
