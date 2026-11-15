@@ -57,6 +57,17 @@ Use the host's service manager to run the Node process under an unprivileged ser
 4. If creation fails, leave its new partial directory for inspection. An `INCOMPLETE.txt` marker or failed verification means **do not restore**. No automatic recursive deletion occurs. Checksums detect accidental corruption; they are not signatures proving a backup came from a trusted source.
 5. Restart the app using its original data paths and verify health/login. Keep an independently protected off-host copy if needed and verify it after transfer. Retention/encryption/off-host scheduling are operator tasks; none is silently configured here.
 
+## Remove leftover test accounts
+
+Stop the server, then run the cleanup tool from `frontend` with the same `DATABASE_PATH`/`MEDIA_PATH`. It always makes and verifies its own backup first, and it only deletes with `--apply` plus a keep-list:
+
+```text
+pnpm cleanup:test-data --backup "<new folder outside the repository>" --server-stopped
+pnpm cleanup:test-data --backup "<another new folder>" --server-stopped --apply --keep "Anirudh,Ayush,Sourabh,Uday,Ravi"
+```
+
+Review the dry-run list before applying. EVAL records stay unless `--include-eval` is added. Restart the server and sign in with a team account afterwards. Details: [frontend/README.md](../frontend/README.md#removing-leftover-test-data).
+
 ## Restore without overwriting the current installation
 
 1. Stop all processes using the target data and verify a backup created by the trusted operator with `pnpm backup verify`.

@@ -16,7 +16,7 @@ Hotspot forecasts now show the first hour after sunrise and last hour before sun
 
 Upcoming daylight forecast rows with rain probability <=20% and wind <=15 km/h are listed as preparation candidates, at most six. Both measurements and daylight bounds must exist. The thresholds are explicit general heuristics, not a learned success model; no matching row does not mean photography is impossible. Current wind/rain/cloud preparation tips remain available.
 
-Photography difficulty remains Unrated for external species: no measured, transferable ordinal difficulty dataset was found in the connected sources. The tile links to existing motion/light/gear preparation. Perched/flight choices and EXIF examples explain demands but cannot establish species difficulty. This is an unresolved requirement, not a renamed completed rating.
+Photography difficulty is not rated for external species (the tile reads **Shot tips**): no measured, transferable ordinal difficulty dataset was found in the connected sources. The tile links to existing motion/light/gear preparation. Perched/flight choices and EXIF examples explain demands but cannot establish species difficulty. This is an unresolved requirement, not a renamed completed rating.
 
 ## Seasonal evidence and exact limitation
 

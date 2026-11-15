@@ -1,148 +1,126 @@
 # Bird Wanderer
 
-A mobile-first birdwatching and wildlife photography application built for a semester-long Software Engineering project.
+A mobile-first birdwatching and wildlife-photography app, built by Group 13 for the Software Engineering course.
 
-Bird Wanderer brings species discovery, hotspots, photography logistics, personal observations and community activity into one interface. Development follows four increments, with the documented screen designs serving as the visual specification.
+Bird Wanderer brings bird discovery, hotspot planning, photography preparation, a personal field journal and a small birding community into one app. It runs as a mobile web app and as an Android app (APK) that wraps the same interface.
 
-> **In development:** account registration, login, persistent sessions and logout are implemented. External discovery is connected to eBird and requires a server API key. Persistent observation, community, alert and quiz/challenge cores are implemented; messaging is delivered, while global search/social inbox cores are delivered and Android preview is delivered with scoped emulator acceptance. This repository is not a finished production service.
+## Status
 
-**Required delivery:** an Android app/APK. The current runtime is a React mobile web interface; Android native packaging now builds locally and has installed/launched in an owned emulator; scoped native picker/privacy/back/connection checks passed, with physical/HTTPS-release acceptance pending. See [Android setup and Viva Notes](android/README.md). Stage 1 frontend stabilization does not produce an APK.
+The project is complete. All four planned phases are delivered and tested, and the Android APK builds and installs.
 
-Start with the [current completion plan](docs/PROJECT_COMPLETION_PLAN.md), [Development Record](docs/DEVELOPMENT_RECORD.md) and [Phase 1 acceptance evidence](docs/PHASE_1_ACCEPTANCE.md). The [presentation script](docs/PHASE_1_PRESENTATION.md) retains the original 6 October checkpoint context. Historical checks are dated; they are not automatically fresh verification.
+| Phase | Scope | Status |
+| --- | --- | --- |
+| 1 — Core | Accounts, species discovery, hotspots and maps, weather and photography planning | Delivered |
+| 2 — Community | Profiles, photo uploads with EXIF reading and metadata removal, journal, life list, community feed | Delivered |
+| 3 — Alerts | Species and hotspot subscriptions, sighting and forecast alerts, optional Firebase push, privacy protection for exact locations | Delivered |
+| 4 — Retention | Photo quiz with XP and streaks, weekly photography challenges, field messaging, global search, notifications | Delivered |
+| Android | Java WebView app with native photo picker, location, sharing and optional push | APK builds and installs |
 
-## Current functionality
+**Next step:** permanent hosting on Azure, so the web app and the APK can reach a server that is always on. The `main_birdwanderer.yml` workflow already builds, tests and deploys `main` to the Birdwanderer Azure Web App; until hosting is finalised the server also runs on a team laptop. See the [release runbook](docs/RELEASE_RUNBOOK.md) and [domain setup](docs/DOMAIN_SETUP.md).
 
-- Fifteen frontend screens for discovery, species, hotspots, community, observations, journal, life list, quiz, messages, profile, search, notifications, settings and authentication.
-- Express authentication API with SQLite persistence, salted password hashes and server-managed sessions.
-- Observation uploads search real eBird common/scientific names, autofill available EXIF date/GPS without replacing manual edits, and support custom map/manual locations outside the hotspot list. Optional historical Open-Meteo estimates are tied to the chosen place/time and saved with the record. Exact coordinates/private labels remain owner-only; shared custom areas are rounded and hidden locations withhold conditions. See [upload location, weather and Viva walkthrough](docs/UPLOAD_LOCATION_WEATHER_WALKTHROUGH.md) for setup, provenance and acceptance limits.
-- Input validation, authentication rate limiting, origin checks and session invalidation on logout.
-- Automated authentication integration tests, TypeScript checks and a production build.
-- Real account-owned JPEG/PNG uploads and source EXIF, metadata-free shared images, persisted observations/journal/life-list membership and profile/privacy preferences are implemented in the current vertical slice. Private/followers/profile restrictions are enforced on records and media. See [upload walkthrough and acceptance limits](docs/OBSERVATIONS_WALKTHROUGH.md). Community follows/reactions/comments/reports are delivered; see [community walkthrough](docs/COMMUNITY_WALKTHROUGH.md). Sighting subscriptions/readstate and optional Firebase source are implemented in the current increment; real provider/device delivery remains unverified. Forecast-opportunity scheduling is implemented in the next source increment; see [forecast rules and evidence](docs/FORECAST_OPPORTUNITIES_WALKTHROUGH.md). See [alerts setup and limits](docs/ALERTS_WALKTHROUGH.md). Ten-question source-photo practice and weekly journal-derived challenges are implemented in the current source increment; see [retention walkthrough](docs/RETENTION_WALKTHROUGH.md). Persistent participant-only messaging is delivered; see [messaging behavior and limits](docs/MESSAGING_WALKTHROUGH.md). Global registered-people/post lookup, categorized social notifications and older-record paging are delivered.
-- Stage 1 frontend fixes: complete local search results, shared hotspot bookmarks, live comment-panel updates, account identity, keyboard-accessible sheets and configurable API proxying.
+## Features
 
-- External discovery: worldwide species taxonomy, regional hotspots and latest regional reports from eBird, with stable source IDs, server-side key handling, a short cache and explicit error/unavailable states. Species pages link to matching hotspots, and hotspot-specific reports/all-time lists link back by species ID. Live checks passed with a local key; each installation must configure its own key.
-- Interactive hotspot maps use Leaflet and OpenStreetMap. Pins follow the displayed filters and open the selected hotspot; its detail page links to Google Maps directions using validated coordinates. Phone interaction and visual acceptance remain pending.
-- Hotspot weather uses Open-Meteo forecasts for the selected eBird location: temperature, wind, humidity, rain, cloud cover, sunrise/sunset and upcoming hourly forecasts. Photography planning tips are labelled general guidance, not photo-derived evidence or predictions of bird activity.
-- Species reference photographs in Explore, Search and species details come from Wikimedia Commons through exact scientific-name matches on Wikidata. Creator, licence and source links are displayed. Details show available camera/exposure EXIF from the same source file, with explicit missing fields and timezone limits. These are recorded reference-photo settings, not recommendations or recent-sighting evidence.
-- **Plan a Shot** opens the existing Field Guide & Technique card: the selected photo's settings, conditional exposure/lens preparation, separately labelled general technique and a hotspot/weather/directions planning path. It does not save a trip or claim an optimal species-wide preset.
-- Species details include a collapsible, credited Wikipedia reference for identification, habitat/range and behaviour, matched through the exact Wikidata species. Unsupported sections stay unavailable; general migration information does not become a local best-season claim.
-- Per-account eBird bird/hotspot bookmarks and the latest ten real searches persist in SQLite. Search has a Saved birds only control; Hotspots retains its existing Saved filter. New saves require a valid provider record, while viewing/removing saved references and history do not call eBird.
-- Optional one-time device/manual location adds nearest-first straight-line distances and 50-km discovery within the configured eBird region. Explore shows an attributed Open-Meteo forecast for the rounded selected point. Clear location restores regional browsing; location is not saved to the account.
-
-- The photography guide compares up to three exact-species licensed reference photographs, per-field EXIF sample counts and readable ranges; it preserves single-photo exposure comparisons. Dated forecast light windows and explicit rain/wind preparation heuristics are separate from historical photo conditions. Imported seasonal statistics and measured difficulty/environment matching remain unverified. See [Evidence walkthrough](docs/PHASE_1_EVIDENCE_WALKTHROUGH.md).
-- Official-source access snapshots cover four venues/eight records: Lodhi, Sunder, Yamuna I/II and Okhla. Sources, conflicts, historical fees and unknown permissions remain explicit; overdue values are withheld after 90 days. Delhi runtime includes adjacent Gautam Buddha Nagar with accurate coverage labels. See [acceptance details](docs/PHASE_1_ACCEPTANCE.md).
-
-The [design comparison checklist](docs/DESIGN_FIDELITY.md) records the current presentation refinements, remaining visual differences and browser-verification boundaries.
+- **Explore:** recent bird reports for Delhi and Noida from eBird, nearby filtering from your device or a chosen point, and a local weather forecast.
+- **Species pages:** credited Wikimedia Commons photographs with their camera settings, Wikipedia identification/habitat/behaviour excerpts, licensed bird-call recordings, a map of recent sightings and photography tips.
+- **Hotspots:** an interactive OpenStreetMap map, recent reports and all-time species lists per hotspot, sunrise/sunset and hourly forecasts, reviewed visitor information for major sites, and Google Maps directions.
+- **Log Observation:** upload a JPEG/PNG, pick the species, read the date and location from the photo when present, add a hotspot or map point, and save the weather for that hour. The stored copy has all embedded metadata removed.
+- **Journal and Life List:** your own records with editing, deletion and life-list tracking.
+- **Community:** feed, follows, likes, saves, comments and reports, with per-post visibility (public, followers, private) enforced by the server.
+- **Field Chats:** private one-to-one messages with optional observation or hotspot attachments that respect post privacy.
+- **Alerts and notifications:** subscribe to a bird or hotspot, get sighting and photography-forecast alerts, and follow/comment/mention notifications.
+- **Bird Quiz:** ten-question photo practice with XP, streaks and weekly challenges.
+- **Account:** password change, optional email verification and password recovery, privacy settings.
 
 ## Technology
 
 | Layer | Implementation |
 | --- | --- |
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS |
-| Maps | Leaflet 1.9.4, OpenStreetMap tiles, Google Maps directions links |
-| Weather | Open-Meteo forecasts plus observation-hour archive/recent-past estimates, with rounded queries, bounded caching and persisted validated snapshots |
 | API | Node.js 24, Express |
-| Database | SQLite through Node's built-in SQLite module |
-| Authentication | scrypt password hashing, hashed session tokens, HttpOnly cookies |
-| Tests | Node.js test runner and HTTP integration tests |
+| Database | SQLite (Node's built-in `node:sqlite`) |
+| Authentication | scrypt password hashes, hashed session tokens, HttpOnly cookies, origin checks, rate limiting |
+| Maps | Leaflet with OpenStreetMap tiles; Google Maps directions links |
+| Data sources | eBird API 2.0, Open-Meteo, Wikidata, Wikimedia Commons, Wikipedia |
+| Android | Java WebView host, Gradle 8.13, Android Gradle Plugin 8.13.2, minimum Android 8 (API 26) |
+| Tests | Node.js test runner: HTTP integration tests, server-rendered UI checks, Android unit tests |
 | Package manager | pnpm 11.25.0 with a committed lockfile |
 
 ## Getting started
 
-Install Node.js **24.15 or later in the 24.x line** and pnpm **11.25.0**. From the repository root:
+Install Node.js **24.15 or later in the 24.x line** and pnpm **11.25.0**. Then:
 
 ```sh
 cd frontend
 pnpm install --frozen-lockfile
+cp .env.example .env   # then add your own eBird API key
 pnpm dev
 ```
 
-Open **http://localhost:3000**. The development command starts the frontend and API together. Use `localhost`, which matches the configured allowed origin. Stop with Ctrl+C.
+Open **http://localhost:3000** (use `localhost`, which matches the default allowed origin) and create an account. On Windows, `./Start-Dev.ps1` from the repository root starts the same thing.
 
-Create an account through the login screen. There are no preconfigured credentials and no cloud API key is required for authentication. Account and personal discovery data are stored in `frontend/data/bird-wanderer.sqlite`; it is intentionally excluded from Git.
+Bird discovery needs a free eBird API key from https://ebird.org/api/keygen in `EBIRD_API_KEY`. Every other service is optional; [`frontend/.env.example`](frontend/.env.example) lists every setting with placeholders. Never commit `.env`, databases, photographs or credentials.
 
-For optional overrides, copy `frontend/.env.example` to `frontend/.env`. Never commit credentials or local databases.
+Accounts, records and photographs are stored in `frontend/data/` (`bird-wanderer.sqlite` and `media/`), which Git ignores.
 
-On Windows, after installing dependencies, `./Start-Dev.ps1` from the repository root can start the application using Node on PATH or the available local runtime.
+## Checks
 
-## Verification
-
-Run from `frontend`:
+From `frontend`:
 
 ```sh
-pnpm lint
-pnpm test
-pnpm build
+pnpm lint    # TypeScript type check
+pnpm test    # automated tests on temporary databases
+pnpm build   # production build
 ```
 
-`lint` currently performs TypeScript checking. Tests use temporary databases and cover registration, invalid credentials, duplicate accounts, session rotation and expiry, logout, origin checks, rate limiting, restart persistence and user isolation. Frontend rendering tests cover search results, empty states, zero sightings and account identity; HTTP tests cover development and preview API proxying. These do not replace browser interaction or visual checks. GitHub Actions runs these checks on pushes and pull requests.
+Android, from `android` (needs JDK 17 and the Android SDK; see [android/README.md](android/README.md)):
+
+```sh
+./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease
+```
+
+GitHub Actions runs both sets of checks on every push and pull request, and the Azure workflow runs them again before deploying `main`.
+
+## Android APK
+
+The APK is a thin Java WebView host for the same interface; the server, database and photographs stay on the server. On first launch it asks which server to connect to. The debug build is at `android/app/build/outputs/apk/debug/app-debug.apk`; the release build must be signed with your own key before distribution. Details: [android/README.md](android/README.md).
+
+## Operations
+
+- **Backups:** `pnpm backup create <new-folder-outside-the-repo> --server-stopped`, then `pnpm backup verify <folder>`. See the [release runbook](docs/RELEASE_RUNBOOK.md).
+- **Removing leftover test data:** `pnpm cleanup:test-data` takes a verified backup and lists every account with its activity, marking likely test accounts. Nothing is deleted without `--apply` and a keep-list. See [frontend/README.md](frontend/README.md#removing-leftover-test-data).
+- **Production:** set `NODE_ENV=production` and an HTTPS `APP_ORIGIN`, run `pnpm build`, then `pnpm start` behind an HTTPS reverse proxy.
 
 ## Repository layout
 
 ```text
 frontend/
-  src/components/       Screen components
-  src/lib/auth.ts       Browser authentication client
-  src/data/mockData.ts  Prototype fixtures
-  server/               API, database setup and integration tests
-  scripts/dev.mjs       Frontend/API development launcher
-docs/
-  AUTH_WALKTHROUGH.md    Authentication implementation guide
-  design-reference/     Original screen and architecture images
-.github/                CI and contribution templates
+  src/components/       Screens and shared UI
+  src/lib/              Browser API clients and helpers
+  server/               Express API modules and their tests
+  scripts/              Dev launcher, tunnel, backup and test-data cleanup
+  worker/               Push-notification service worker
+android/                Java WebView app (Gradle project)
+docs/                   Walkthroughs, acceptance records and design references
+  design-reference/     Approved screen designs
+.github/                CI, Android and Azure deployment workflows; contribution templates
 ```
 
-The frontend and backend currently share one package under `frontend/`. Keeping them together makes the initial increment easy to run; backend code is isolated in `server/`.
+## Data sources and credits
 
-## Delivery roadmap
+Bird reports and hotspots: [eBird](https://ebird.org) (Cornell Lab of Ornithology). Weather: [Open-Meteo](https://open-meteo.com) (CC BY 4.0). Species photographs and recordings: [Wikimedia Commons](https://commons.wikimedia.org), credited with each creator and licence in the app. Species text: [Wikipedia](https://en.wikipedia.org) (CC BY-SA 4.0). Maps: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
 
-| Phase | Scope | Status |
-| --- | --- | --- |
-| 1 — Core | Refined UI, authentication, species discovery, hotspots, photography logistics | In progress; checkpoint 6 October 2026 |
-| 2 — Community | Persistent profiles, photo uploads, EXIF extraction, community interactions | Delivered core and list pagination; native/physical acceptance continues |
-| 3 — Alerts | Subscriptions, sighting notifications, conservation privacy filters | Sighting and forecast in-app alerts delivered; optional Firebase source, real push unconfigured |
-| 4 — Retention | Quiz and engagement features, remaining required interactions | Quiz/challenges and messaging/search delivered; integrated acceptance continues |
+## Team (Group 13)
 
-All four phases and an Android APK are required. The original **20 October 2026** deadline is historical; full-cycle completion was authorized on 23 October without a replacement deadline. Seasonal statistical imports, measured difficulty/historical environment matching, complete operator-confirmed access, production hosting, physical-device/push and exact visual acceptance remain unresolved. Multi-photo comparisons and labelled forecast heuristics are implemented. The Android debug and unsigned release APKs build locally; initial emulator installation/launch passes. Scoped native flows passed; successful GPS, signing/distribution and physical acceptance remain open. See the completion plan for current status rather than treating historical presentation checks as final acceptance.
+Anirudh Jain (project manager and deployment), Ayush Pandey (development), Sourabh (design), Uday (testing) and Ravi Ranjan (requirements analysis).
 
 ## Documentation
 
-- [Main chronological development record — start here](docs/DEVELOPMENT_RECORD.md)
+- [Development record](docs/DEVELOPMENT_RECORD.md): dated history of every increment
+- [Final acceptance](docs/FINAL_ACCEPTANCE.md) and [design comparison](docs/DESIGN_FIDELITY.md)
+- [Release runbook](docs/RELEASE_RUNBOOK.md), [domain setup](docs/DOMAIN_SETUP.md) and [runtime notes](frontend/README.md)
+- [Android app](android/README.md)
+- Feature walkthroughs with viva notes: [authentication](docs/AUTH_WALKTHROUGH.md), [discovery](docs/DISCOVERY_WALKTHROUGH.md), [weather](docs/WEATHER_WALKTHROUGH.md), [photos](docs/PHOTOS_WALKTHROUGH.md), [EXIF](docs/EXIF_WALKTHROUGH.md), [observations](docs/OBSERVATIONS_WALKTHROUGH.md), [community](docs/COMMUNITY_WALKTHROUGH.md), [alerts](docs/ALERTS_WALKTHROUGH.md), [messaging](docs/MESSAGING_WALKTHROUGH.md), [retention](docs/RETENTION_WALKTHROUGH.md), [search and notifications](docs/SEARCH_NOTIFICATIONS_WALKTHROUGH.md), [password recovery](docs/PASSWORD_RECOVERY_WALKTHROUGH.md) and more in [docs/](docs/)
 - [Living project specification](https://docs.google.com/document/d/1_KcOFYP8ELQf6WegrDuPw5uNlLqqlc90Gf2x46mSUvc/edit?usp=sharing)
-- [External discovery setup and walkthrough](docs/DISCOVERY_WALKTHROUGH.md)
-- [Hotspot weather and photography planning walkthrough](docs/WEATHER_WALKTHROUGH.md)
-- [Species photographs and attribution walkthrough](docs/PHOTOS_WALKTHROUGH.md)
-- [External-photo EXIF walkthrough and viva notes](docs/EXIF_WALKTHROUGH.md)
-- [Photography planning walkthrough and viva notes](docs/PHOTO_PLANNING_WALKTHROUGH.md)
-- [Sourced species information walkthrough and viva notes](docs/SPECIES_INFORMATION_WALKTHROUGH.md)
-- [Discovery saves and search history walkthrough, including Viva Notes](docs/DISCOVERY_ACTIVITY_WALKTHROUGH.md)
-- [Nearby discovery and Explore weather walkthrough, including Viva Notes](docs/NEARBY_WEATHER_WALKTHROUGH.md)
-- [Authentication walkthrough](docs/AUTH_WALKTHROUGH.md)
-- [Stage 1 walkthrough and manual checks](docs/STAGE_1_WALKTHROUGH.md)
-- [Design reference index](docs/design-reference/README.md)
-- [Global search, social notifications and paging walkthrough](docs/SEARCH_NOTIFICATIONS_WALKTHROUGH.md)
-- [Field messaging walkthrough and Viva Notes](docs/MESSAGING_WALKTHROUGH.md)
-- [Development and contribution guide](CONTRIBUTING.md)
-- [Runtime and deployment notes](frontend/README.md)
-- [Phase 1 acceptance and continuation](docs/PHASE_1_ACCEPTANCE.md)
-- [Multiple-reference evidence, local timing and access — Viva Notes](docs/PHASE_1_EVIDENCE_WALKTHROUGH.md)
+- [Contribution guide](CONTRIBUTING.md)
 
-Design references come from the team's specification. Runtime prototype imagery uses external URLs and still needs a source/attribution review before public release. No project-wide open-source license has been selected; existing file-level notices are preserved.
-
-Current control checklist: [Final acceptance](docs/FINAL_ACCEPTANCE.md). Journal editor flow and Viva Notes: [Observation editing](docs/OBSERVATION_EDITING_WALKTHROUGH.md).
-
-Account control flow and Viva Notes: [Account Settings](docs/ACCOUNT_SETTINGS_WALKTHROUGH.md). Authenticated password changes and optional email recovery source are implemented; actual SMTP/mailbox delivery remains unconfigured.
-
-Destination links and Viva Notes: [Navigation and sharing](docs/NAVIGATION_SHARING_WALKTHROUGH.md).
-
-Operations, backup/restore, demo steps and Viva Notes: [Release runbook](docs/RELEASE_RUNBOOK.md). Backups must use a new private directory outside this repository after stopping app writers.
-
-Native Firebase source, optional configuration and Viva Notes: [Android push adapter](docs/NATIVE_PUSH_WALKTHROUGH.md). The project/provider/device configuration and actual receipt remain unverified.
-
-Dependency fixes and Viva Notes: [Dependency audit](docs/DEPENDENCY_SECURITY_WALKTHROUGH.md).
-
-Sourced recording flow, provider limits and Viva Notes: [Species recordings](docs/RECORDINGS_WALKTHROUGH.md).
-
-Email setup, one-time link flow, limitations and Viva Notes: [Password recovery](docs/PASSWORD_RECOVERY_WALKTHROUGH.md).
-
-Community can be refreshed with the Refresh button beside Upload, or by pulling down at the top of the feed until "Release to refresh" appears. Existing filters and search remain selected; errors retain the current content and offer retry.
+No project-wide open-source licence has been chosen; existing file-level notices are kept.

@@ -4,7 +4,7 @@ Implemented 4 October 2026. This Phase 1 increment keeps personal discovery acti
 
 ## What teammates can use
 
-1. Sign in and open an eBird bird. Its bookmark adds/removes a field target. Go to Search, select Birds and enable **Saved birds only**; clear the query to browse saved birds.
+1. Sign in and open an eBird bird. Its bookmark adds/removes a field target. Go to Search and turn on the **Saved birds** filter; clear the query to browse saved birds.
 2. Open an eBird hotspot. Its header bookmark and SAVE button represent the same account record. The existing Hotspots **Saved** filter shows bookmarked locations.
 3. Search starts empty, without fabricated history. Type a query and press Enter, or open a bird/hotspot result. The latest ten actual queries appear as Recent Searches. A chip reuses/promotes a term; its close button removes it; Clear All removes history.
 4. Refresh or sign out/in. Bookmarks/history return for that account. A different account has its own records.
