@@ -42,6 +42,8 @@ jobs:
         working-directory: frontend
         run: |
           pnpm --filter=bird-wanderer deploy --prod --legacy ../.azure-deploy
+          rm -rf ../.azure-deploy/node_modules
+          npm install --prefix ../.azure-deploy --omit=dev --no-audit --no-fund
           mkdir -p ../.azure-deploy/dist
           cp -R dist/. ../.azure-deploy/dist/
 
