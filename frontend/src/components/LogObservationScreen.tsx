@@ -33,7 +33,7 @@ export const LogObservationScreen: React.FC<LogObservationScreenProps> = ({
   const [observedAt, setObservedAt] = useState('');
   const [point, setPoint] = useState<ObservationPoint | null>(null);
   const [utcOffset, setUtcOffset] = useState('');
-  const [dateSource, setDateSource] = useState('Enter the observation time or use photo EXIF when present.');
+  const [dateSource, setDateSource] = useState('Enter when you saw the bird, or use the time saved in your photo.');
   const [conditions, setConditions] = useState<ConditionsSelection | null>(null);
   const dateEdited = useRef(false), locationEdited = useRef(false);
   const [locationReset, setLocationReset] = useState(0);
@@ -54,7 +54,7 @@ export const LogObservationScreen: React.FC<LogObservationScreenProps> = ({
     const time = exifObservationTime(media.exif);
     if (force || !dateEdited.current) {
       setObservedAt(time); setUtcOffset(time ? media.exif.utcOffset || '' : ''); dateEdited.current = false;
-      setDateSource(time ? 'Autofilled from the photo EXIF camera clock; confirm or edit it.' : 'No valid capture date in this photo. Enter it manually.');
+      setDateSource(time ? 'Filled in from your photo. Check it and edit if needed.' : 'This photo has no date saved with it. Enter it yourself.');
     }
     if (force || !locationEdited.current) {
       setHotspotId(''); setPoint(media.privateLocation ? { ...media.privateLocation, label: '', source: 'exif' } : null); locationEdited.current = false;
@@ -192,8 +192,7 @@ export const LogObservationScreen: React.FC<LogObservationScreenProps> = ({
         </span>
       </div>
       <InformationDisclosure className="absolute right-5 top-3" label="Photo upload information">      <p className="text-[11px] text-[#42493e] mb-4">
-        JPEG/PNG, up to 10 MB and 40 megapixels. Stored copy is metadata-free JPEG, up to 4096px. Original
-        file is not retained. Species identification is your selection, not automatic verification.
+        JPEG or PNG, up to 10 MB and 40 megapixels. We keep a resized copy with location and camera data removed from the file; your original is not stored. You choose the species yourself: this is not automatic verification.
       </p>
       </InformationDisclosure>
       <section className="space-y-3 mb-4">
@@ -235,29 +234,29 @@ export const LogObservationScreen: React.FC<LogObservationScreenProps> = ({
               </option>
             ))}
           </select>
-          {!matches.length && <p className="text-[12px]">No matching species in the loaded catalogue.</p>}
-          <p className="text-[11px]">{selected ? `Selected: ${selected.name} (${selected.scientificName})` : `${search.total} catalogue matches. Type a common or scientific name, then choose a result. Only the first 50 matches are listed.`}</p>
+          {!matches.length && <p className="text-[12px]">No matching species found.</p>}
+          <p className="text-[11px]">{selected ? `Selected: ${selected.name} (${selected.scientificName})` : `${search.total} ${search.total === 1 ? 'match' : 'matches'}. Type a name, then choose a result${search.total > 50 ? ' (first 50 shown)' : ''}.`}</p>
         </details>
         <div className="flex flex-col gap-3">
           <details open={(!hotspotId && !point) || undefined} className="rounded-xl bg-[#f1f4f9] p-3"><summary className="cursor-pointer list-none space-y-2">
             <span className="flex items-center gap-1.5 text-[12px]"><span aria-hidden="true" className="material-symbols-outlined text-[16px] text-[#154212]">near_me</span>Location</span>
-            <span className="flex min-h-11 items-center justify-between gap-2 rounded bg-white p-3"><span className="min-w-0 break-words text-[14px]">{point ? point.label || 'Chosen observation point' : site?.name || 'Choose location'}</span><span aria-hidden="true" className="material-symbols-outlined text-[20px]">location_on</span></span>
+            <span className="flex min-h-11 items-center justify-between gap-2 rounded bg-white p-3"><span className="min-w-0 break-words text-[14px]">{point ? point.label || 'Chosen spot' : site?.name || 'Choose location'}</span><span aria-hidden="true" className="material-symbols-outlined text-[20px]">location_on</span></span>
             <span className="sr-only">Edit observation location</span>
           </summary>
           <ObservationLocationFields resetKey={locationReset} hotspots={hotspots} hotspotId={hotspotId} point={point} disabled={published || saving} onChange={(id, next) => { locationEdited.current = true; setHotspotId(id); setPoint(next);  }} />
           </details>
           <div className="bg-[#f1f4f9] p-3 rounded-xl text-[12px] font-bold">
-            <div className="flex items-center justify-between"><span>Date &amp; Time</span><InformationDisclosure className="reference-info-inline" label="Date and EXIF controls">        <p className="text-[11px] text-[#42493e]">
-          {dateSource} A camera clock/timezone is not independently verified. A selected hotspot is not proof of where the photo was captured.
+            <div className="flex items-center justify-between"><span>Date &amp; Time</span><InformationDisclosure className="reference-info-inline" label="Date and time options">        <p className="text-[11px] text-[#42493e]">
+          {dateSource}
         </p>
-        <label className="block text-[12px]">UTC offset (optional, such as +05:30)<input aria-label="Observation UTC offset" value={utcOffset} disabled={published || saving} maxLength={6} onChange={event => { dateEdited.current = true; setUtcOffset(event.target.value);  }} className="block w-full min-h-11 rounded-lg bg-[#f1f4f9] p-2" /></label>
-        {uploaded && !published && <button type="button" className="min-h-11 underline text-[12px]" disabled={saving} onClick={() => applyExif(uploaded, true)}>Use photo EXIF date and GPS again (replaces manual entries)</button>}</InformationDisclosure></div>
+        <label className="block text-[12px]">Time zone offset (optional, such as +05:30)<input aria-label="Observation UTC offset" value={utcOffset} disabled={published || saving} maxLength={6} onChange={event => { dateEdited.current = true; setUtcOffset(event.target.value);  }} className="block w-full min-h-11 rounded-lg bg-[#f1f4f9] p-2" /></label>
+        {uploaded && !published && <button type="button" className="min-h-11 underline text-[12px]" disabled={saving} onClick={() => applyExif(uploaded, true)}>Use the date and location from my photo again</button>}</InformationDisclosure></div>
             <input
               aria-label="Observation date and time"
               type="datetime-local"
               value={observedAt}
               disabled={published || saving}
-              onChange={(event) => { dateEdited.current = true; setObservedAt(event.target.value); setUtcOffset(''); setDateSource('Manually entered local clock; timezone unverified.');  }}
+              onChange={(event) => { dateEdited.current = true; setObservedAt(event.target.value); setUtcOffset(''); setDateSource('Entered by you.');  }}
               className="block mt-2 w-full min-h-11 min-w-0 rounded-lg bg-white p-2 text-[13px] font-normal"
             />
           </div>
@@ -278,26 +277,26 @@ export const LogObservationScreen: React.FC<LogObservationScreenProps> = ({
         />
       </label>
       <section className="bg-[#f1f4f9] p-3.5 rounded-xl mb-4">
-        <div className="flex items-center justify-between mb-2"><h3 className="text-[18px] font-medium">Photo Details</h3><InformationDisclosure className="reference-info-inline" label="Photo metadata and provenance">
+        <div className="flex items-center justify-between mb-2"><h3 className="text-[18px] font-medium">Photo Details</h3><InformationDisclosure className="reference-info-inline" label="Camera settings from your photo">
         {uploaded ? (
           <>
             <PhotoMetadata exif={uploaded.exif} source="upload" />
             {uploaded.metadataError && (
               <p role="status" className="text-[12px]">
-                Image is valid, but camera metadata could not be read.
+                The photo is fine, but its camera settings could not be read.
               </p>
             )}
           </>
         ) : (
           <p className="text-[12px]">
-            Choose a photograph to read its actual EXIF. Missing settings will not be filled in.
+            Add a photograph to see its camera settings here.
           </p>
         )}
         </InformationDisclosure></div>
         <div className="grid grid-cols-4 gap-2 text-center text-[12px]">
           {[
-            ['Camera', uploaded?.exif.cameraModel || uploaded?.exif.cameraMake || 'Unavailable'],
-            ['Lens', uploaded?.exif.lens || 'Unavailable'],
+            ['Camera', uploaded?.exif.cameraModel || uploaded?.exif.cameraMake || '—'],
+            ['Lens', uploaded?.exif.lens || '—'],
             ['Focal', uploaded?.exif.focalLengthMm == null ? 'Unavailable' : `${uploaded.exif.focalLengthMm}mm`],
             ['Aperture', uploaded?.exif.aperture == null ? 'Unavailable' : `f/${uploaded.exif.aperture}`],
             ['Shutter', uploaded ? formatShutter(uploaded.exif.exposureSeconds) : 'Unavailable'],
@@ -323,10 +322,9 @@ export const LogObservationScreen: React.FC<LogObservationScreenProps> = ({
           </button>
         </div>
         <div className="flex items-center justify-between"><p className="text-[14px]">Hide exact location</p><InformationDisclosure className="reference-info-inline" label="Location privacy details">        <p className="text-[11px] mt-2">
-          Exact EXIF and chosen coordinates are private to you. Hidden custom locations also withhold conditions; generalized custom areas use 0.1-degree rounding. Custom labels stay private. Image metadata is removed. This protection currently applies to every species, without claiming a reviewed
-          endangered-species classification.
+          Exact coordinates from your photo or map pin are only ever visible to you, and location data is removed from the shared image. With this switch on, other people see no location or weather for this post. With it off, a hotspot is shown by name and a custom spot only as a rough area (about 11 km).
         </p></InformationDisclosure></div>
-        <p className="mt-1 text-[12px] text-[#42493e]">Exact photo coordinates stay private. Sharing follows the selected visibility.</p>
+        <p className="mt-1 text-[12px] text-[#42493e]">Exact photo coordinates always stay private.</p>
       </section>
       <section className="bg-[#f1f4f9] p-3.5 rounded-xl mb-4">
         <h3 className="text-[16px] font-medium mb-2">Post visibility</h3>
@@ -345,8 +343,7 @@ export const LogObservationScreen: React.FC<LogObservationScreenProps> = ({
           ))}
         </div>
         <InformationDisclosure className="reference-info-inline ml-auto" label="Visibility details">        <p className="text-[11px] mt-2">
-          Private stays in your journal. Followers requires a stored follow relationship. Public follows your
-          profile visibility too.
+          Private: only you. Followers: people who follow you. Public: everyone, unless your profile is limited to followers in Settings.
         </p></InformationDisclosure>
       </section>
       {error && (

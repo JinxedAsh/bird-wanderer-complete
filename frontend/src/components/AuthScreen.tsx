@@ -121,7 +121,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, showToas
                   maxLength={80}
                   value={observerName}
                   onChange={(e) => setObserverName(e.target.value)}
-                  placeholder="Sourabh"
+                  placeholder="Your name"
                   required
                   className="w-full h-12 pl-10 pr-3 rounded bg-[#f1f4f9] text-[#181c20] text-[14px] placeholder:text-[#72796e] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#154212] transition-colors"
                 />
@@ -147,7 +147,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, showToas
                 maxLength={254}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="sourabh@wanderer.in"
+                placeholder="you@example.com"
                 required
                 className="w-full h-12 pl-10 pr-3 rounded bg-[#f1f4f9] text-[#181c20] text-[14px] placeholder:text-[#72796e] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#154212] transition-colors"
               />
@@ -243,7 +243,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess, showToas
       <aside className="mt-6 flex items-center justify-center gap-2 py-2 px-4 rounded-full bg-[#f1f4f9]">
         <span className="flex h-2 w-2 rounded-full bg-[#904d00]"></span>
         <p className="text-[10px] font-medium text-[#42493e] tracking-wide uppercase">
-          EXTERNAL DISCOVERY & FIELD PLANNING
+          BIRDS · HOTSPOTS · FIELD JOURNAL
         </p>
       </aside>
     </div>

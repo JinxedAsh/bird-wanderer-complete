@@ -54,7 +54,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const handleToggleSensitive = async (val: boolean) => {
     if(await onUpdateProfile({ sensitiveSpeciesProtection: val }) === false)return;
     setSensitiveProtection(val);
-    showToast('Preference saved. Exact shared locations remain protected for all species.');
+    showToast('Saved. Exact locations stay hidden for every species.');
   };
 
   const handleSetVisibility = async (mode: 'public' | 'followers') => {
@@ -68,7 +68,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       {changingPassword && <ChangePasswordSheet onClose={()=>setChangingPassword(false)} onSessionExpired={onSessionExpired} showToast={showToast} />}
       {typeof navigator!=='undefined'&&navigator.userAgent.includes('BirdWandererAndroid/')&&<div className="mx-4 my-2 rounded-xl bg-white p-3 text-[12px] text-[#42493e]">
         <button type="button" onClick={()=>{window.location.href='birdwanderer://connection';}} className="min-h-11 font-semibold underline">Android server connection</button>
-        <p>Choose the trusted server for this Android app. Changing servers signs this app out; records remain on their original server. Push requires matching Firebase setup and notification permission; see Notifications for status.</p>
+        <p>Choose which Bird Wanderer server this app connects to. Changing it signs you out; your records stay on the server they were saved to.</p>
       </div>}
       {/* Field Naturalist Identity Snippet */}
       <div className="px-4 pt-2 pb-2">
@@ -276,11 +276,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 </span>
                 <div className="flex flex-col">
                   <span className="text-[13px] font-bold text-[#181c20]">Bird alerts</span>
-                  <span className="text-[11px] text-[#42493e]">Manage species/hotspot subscriptions in Notifications</span>
+                  <span className="text-[11px] text-[#42493e]">Manage bird and hotspot alerts in Notifications</span>
                 </div>
               </div>
               <span className="bg-[#ebeef3] text-[#154212] text-[10px] font-bold px-2 py-1 rounded">
-                {userProfile.pushAlertsEnabled?'In-app enabled':'In-app off'}
+                {userProfile.pushAlertsEnabled?'On':'Off'}
               </span>
             </div>
 
@@ -301,7 +301,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <div className="flex flex-col">
           <div className="bg-white rounded-2xl shadow-xs flex flex-col overflow-hidden border border-[#f1f4f9]">
             <button
-              onClick={() => showToast(`Bird Wanderer v${packageInfo.version} • Development preview`)}
+              onClick={() => showToast(`Bird Wanderer v${packageInfo.version}`)}
               className="w-full px-4 py-3 flex items-center justify-between text-left active:bg-[#f1f4f9] transition-colors border-b border-[#f1f4f9]"
             >
               <div className="flex items-center gap-2.5">
@@ -345,8 +345,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <div className="flex flex-col">
             <span className="text-[13px] font-bold text-[#01210f]">Mindful Observation Code</span>
             <p className="text-[12px] text-[#2e4e37] mt-0.5 leading-relaxed">
-              Bird Wanderer enforces the American Birding Association and IUCN code of ethics. Never
-              flush birds for photographs or reveal fragile raptor nesting roosts.
+              Follow the American Birding Association code of birding ethics: never flush birds for a photograph,
+              and never share the location of an active nest or roost.
             </p>
           </div>
         </div>

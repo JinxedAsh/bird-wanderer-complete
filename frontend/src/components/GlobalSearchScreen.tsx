@@ -1,6 +1,7 @@
-import { InformationDisclosure } from './InformationDisclosure';
 import React, { useEffect, useRef, useState } from 'react';
 import { BirdSpecies, Hotspot, ScreenType, CommunityPost } from '../types';
+import { fieldTime, regionName } from '../lib/discovery';
+import { DataSource } from './DataSource';
 import {
   observations,
   observationPost,
@@ -10,7 +11,6 @@ import { SessionExpiredError } from '../lib/auth';
 import { SpeciesPhoto } from './SpeciesPhoto';
 
 interface GlobalSearchScreenProps {
-  sourceInformation?: React.ReactNode;
   onOpenPerson?: (id: string) => void;
   onOpenPost?: (id: string) => void;
   recentSearches?: string[];
@@ -19,13 +19,11 @@ interface GlobalSearchScreenProps {
   onRecordSearch?: (term: string) => void;
   onRemoveSearch?: (term?: string) => void;
   onSessionExpired?: () => void;
-  externalDiscovery?: boolean;
   onSelectSpecies: (species: BirdSpecies) => void;
   onSelectHotspot: (hotspot: Hotspot) => void;
   onNavigate: (screen: ScreenType) => void;
   speciesList: BirdSpecies[];
   hotspots: Hotspot[];
-  posts: CommunityPost[];
 }
 
 export function birdMatchesQuery(bird: BirdSpecies, query: string) {
@@ -48,7 +46,6 @@ export function birdMatchesQuery(bird: BirdSpecies, query: string) {
 }
 
 export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
-  sourceInformation,
   onOpenPerson,
   onOpenPost,
   recentSearches = [],
@@ -57,13 +54,11 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
   onRecordSearch,
   onRemoveSearch,
   onSessionExpired,
-  externalDiscovery = false,
   onSelectSpecies,
   onSelectHotspot,
   onNavigate,
   speciesList,
   hotspots,
-  posts,
 }) => {
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<
@@ -96,13 +91,13 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
     (h) =>
       !q ||
       h.name.toLowerCase().includes(q) ||
-      h.region.toLowerCase().includes(q),
+      regionName(h.region).toLowerCase().includes(q),
   );
 
   const [foundPeople, setFoundPeople] = useState<PublicBirder[]>([]);
   const [foundPosts, setFoundPosts] = useState<CommunityPost[]>([]);
   const [searchError, setSearchError] = useState('');
-  const [searchLoading, setSearchLoading] = useState(externalDiscovery);
+  const [searchLoading, setSearchLoading] = useState(true);
   const [nextPeople, setNextPeople] = useState<number | null>(null);
   const [nextPosts, setNextPosts] = useState<number | null>(null);
   const [searchAttempt, setSearchAttempt] = useState(0);
@@ -119,7 +114,6 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
       );
   };
   useEffect(() => {
-    if (!externalDiscovery) return;
     const request = new AbortController();
     searchController.current = request;
     loadingPage.current = true;
@@ -151,7 +145,7 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
       request.abort();
       window.clearTimeout(timer);
     };
-  }, [q, externalDiscovery, searchAttempt]);
+  }, [q, searchAttempt]);
   const more = async (kind: 'people' | 'posts') => {
     const request = searchController.current,
       offset = kind === 'people' ? nextPeople : nextPosts;
@@ -200,19 +194,7 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
     }
   };
   const matchedPeople = foundPeople;
-  const matchedPosts = externalDiscovery
-    ? foundPosts
-    : posts.filter(
-        (post) =>
-          !q ||
-          [
-            post.speciesName,
-            post.speciesScientific,
-            post.authorName,
-            post.location,
-            post.caption,
-          ].some((value) => value.toLowerCase().includes(q)),
-      );
+  const matchedPosts = foundPosts;
 
   const showBirds = activeCategory === 'all' || activeCategory === 'birds';
   const showPeople = activeCategory === 'all' || activeCategory === 'people';
@@ -257,32 +239,6 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
               </span>
             </button>
           )}
-          <InformationDisclosure label="Search options, sources and history">
-          {sourceInformation}
-      {(activeCategory === 'all' || activeCategory === 'birds') &&
-        externalDiscovery && (
-          <label className="mt-2 flex items-center gap-2 text-[12px] text-[#42493e]">
-            <input
-              type="checkbox"
-              checked={savedOnly}
-              onChange={(event) => setSavedOnly(event.target.checked)}
-            />
-            Saved birds only
-          </label>
-        )}
-      {onRecordSearch && (
-        <p className="mt-2 text-[11px] text-[#72796e]">
-          Press Enter or open a bird/hotspot result to keep this search.
-        </p>
-      )}
-
-      {externalDiscovery && (showPeople || showPosts) && (
-        <p className="text-[12px] text-[#42493e]">
-          People and posts are searched on the server using your current access.
-          Photos and identification remain user-reported.
-        </p>
-      )}
-      </InformationDisclosure>
         </div>
       </div>
 
@@ -306,6 +262,21 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
               </button>
             );
           },
+        )}
+        {showBirds && (
+          <button
+            type="button"
+            aria-pressed={savedOnly}
+            onClick={() => setSavedOnly((value) => !value)}
+            className={`reference-filter h-7 px-3.5 rounded-xl text-[12px] font-medium transition-all whitespace-nowrap inline-flex items-center gap-1 ${
+              savedOnly
+                ? 'bg-[#ffdcc3] text-[#6e3900] shadow-xs'
+                : 'bg-[#ebeef3] text-[#42493e] hover:bg-[#e0e3e8]'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: savedOnly ? "'FILL' 1" : "'FILL' 0" }}>bookmark</span>
+            Saved birds
+          </button>
         )}
       </div>
 
@@ -366,7 +337,7 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
           see more.
         </p>
       )}
-      {externalDiscovery && searchLoading && (
+      {searchLoading && (
         <p role="status" className="text-sm">
           Loading people and posts…
         </p>
@@ -378,7 +349,7 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
             className="min-h-11 underline"
             onClick={() => setSearchAttempt((n) => n + 1)}
           >
-            Retry global search
+            Try again
           </button>
         </p>
       )}
@@ -425,11 +396,9 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
                     visibility
                   </span>
                   <span>
-                    {bird.source
-                      ? bird.recentObservations?.length
-                        ? 'Recent regional report available'
-                        : 'No recent regional report in this response'
-                      : `${bird.sightingsThisWeek ?? 0} local sightings this week`}
+                    {bird.recentObservations?.length
+                      ? `Seen ${fieldTime(bird.recentObservations[0].observedAt).split(',')[0]}`
+                      : 'No recent reports'}
                   </span>
                 </div>
               </div>
@@ -477,7 +446,7 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
                   >
                     photo_camera
                   </span>
-                  <span>{person.photosCount} visible photographs</span>
+                  <span>{person.photosCount} {person.photosCount === 1 ? 'photo' : 'photos'}{person.birdsCount ? ` • ${person.birdsCount} species` : ''}</span>
                 </div>
               </div>
               <span className="material-symbols-outlined text-[#c2c9bb] text-[20px]">
@@ -519,19 +488,15 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
                   </span>
                 </div>
                 <p className="text-[12px] text-[#72796e] truncate">
-                  {hotspot.region} •{' '}
-                  {hotspot.distanceKm == null
-                    ? 'Distance unavailable'
-                    : `${hotspot.distanceKm.toFixed(1)} km away`}
+                  {regionName(hotspot.region)}
+                  {hotspot.distanceKm != null && ` • ${hotspot.distanceKm.toFixed(1)} km away`}
                 </p>
                 <div className="flex items-center gap-1 mt-1 text-[#42493e] text-[11px] font-semibold">
                   <span className="material-symbols-outlined text-[#154212] text-[14px]">
                     eco
                   </span>
                   <span className="text-[#3b6934] font-bold">
-                    {hotspot.source
-                      ? `${hotspot.speciesCount ?? 'Unknown'} species recorded all time`
-                      : `${hotspot.activeTodayCount} species active today`}
+                    {hotspot.speciesCount == null ? 'Birding hotspot' : `${hotspot.speciesCount} species recorded`}
                   </span>
                 </div>
               </div>
@@ -567,7 +532,7 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
                   </span>
                 </div>
                 <p className="text-[12px] text-[#42493e] line-clamp-1">
-                  {post.location}
+                  at {post.location}
                 </p>
                 <div className="flex items-center gap-1 mt-1 text-[11px] text-[#72796e]">
                   <span>By {post.authorName}</span>
@@ -602,11 +567,11 @@ export const GlobalSearchScreen: React.FC<GlobalSearchScreenProps> = ({
               No wanderings found
             </span>
             <p className="text-[13px] text-[#42493e] mt-1 max-w-[240px]">
-              Try adjusting your search terms or exploring nearby regional
-              checklist hotspots.
+              Try a different name, or browse nearby hotspots instead.
             </p>
           </div>
         )}
+        {(matchedBirds.length > 0 || matchedHotspots.length > 0) && <DataSource className="pt-2" />}
       </div>
     </div>
   );

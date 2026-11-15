@@ -1,13 +1,12 @@
-import { InformationDisclosure } from './InformationDisclosure';
 import React, { useMemo, useState } from 'react';
 import { Hotspot, ScreenType } from '../types';
 import { HotspotMap } from './HotspotMap';
 import { nearbyRadiusKm } from '../lib/location';
+import { DataSource } from './DataSource';
 
 interface HotspotsScreenProps {
   nearbyEnabled?: boolean;
   onChooseLocation?: () => void;
-  externalDiscovery?: boolean;
   hotspots: Hotspot[];
   onSelectHotspot: (hotspot: Hotspot) => void;
   onNavigate: (screen: ScreenType) => void;
@@ -17,7 +16,6 @@ interface HotspotsScreenProps {
 export const HotspotsScreen: React.FC<HotspotsScreenProps> = ({
   nearbyEnabled = false,
   onChooseLocation,
-  externalDiscovery = false,
   hotspots,
   onSelectHotspot,
   onNavigate,
@@ -31,9 +29,7 @@ export const HotspotsScreen: React.FC<HotspotsScreenProps> = ({
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       const matches = (
-        h.name.toLowerCase().includes(q) ||
-        h.region.toLowerCase().includes(q) ||
-        h.trailDifficulty.toLowerCase().includes(q)
+        h.name.toLowerCase().includes(q)
       );
       if (!matches) return false;
     }
@@ -75,8 +71,8 @@ export const HotspotsScreen: React.FC<HotspotsScreenProps> = ({
             type="text"
           />
           <button
-            onClick={() => onChooseLocation ? onChooseLocation() : showToast('Nearby locations are sample data. Live GPS is not connected yet.')}
-            aria-label="Current location"
+            onClick={() => onChooseLocation?.()}
+            aria-label="Choose location"
             className="absolute right-1 w-11 h-11 flex items-center justify-center rounded-full text-[#42493e] hover:text-[#154212] transition-colors"
           >
             <span className="material-symbols-outlined text-[18px]">near_me</span>
@@ -97,7 +93,7 @@ export const HotspotsScreen: React.FC<HotspotsScreenProps> = ({
                     : 'bg-[#f1f4f9] text-[#42493e] hover:bg-[#ebeef3]'
                 }`}
               >
-                  {externalDiscovery && filter === 'nearby' ? nearbyEnabled ? 'Nearby (50 km)' : 'Region' : filter}
+                  {filter === 'nearby' ? nearbyEnabled ? 'Nearby (50 km)' : 'All' : filter}
               </button>
             );
           })}
@@ -105,75 +101,12 @@ export const HotspotsScreen: React.FC<HotspotsScreenProps> = ({
       </div>
 
       {/* Map Stage */}
-      {!externalDiscovery && <div className="relative px-4 my-1">
-        <div className="relative w-full h-60 rounded-2xl overflow-hidden bg-[#ebeef3] shadow-sm border border-[#e0e3e8]">
-          <img
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYCLW4O-VpotfLtQjSzbP881hkudRW2F-Cz5OTlz5qWB2-YtqSDwyEbnv5DjLGgo8dEgBFh1PMWNppQ-ythe0OXVVa46KIfY-1Td2FXsLyPizYHMblBoJnbT1Et5ubzR5dp_74y_PeeKZz_Md2rHggMarwul09J03eTq4-_yoWnBPFRPGB2jUAehrVsaGUxAQ-mx6WLF6lCCz0iJSKDmzTV9p1fEk2to48vS2HgaRHwjX_XQCrmXDjEQ"
-            alt="Delhi Map View"
-            className="w-full h-full object-cover"
-          />
-
-          <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#154212]/20 via-transparent to-transparent"></div>
-
-          {/* Map Pin: Yamuna */}
-          <button
-            onClick={() => handlePinClick('yamuna')}
-            className={`absolute top-10 right-14 flex items-center gap-1.5 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md transition-transform hover:scale-105 ${
-              activePinId === 'yamuna' ? 'scale-110 ring-2 ring-[#154212]' : ''
-            }`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full bg-[#154212] animate-pulse"></span>
-            <span className="text-[11px] font-bold text-[#181c20]">Yamuna</span>
-          </button>
-
-          {/* Map Pin: Okhla */}
-          <button
-            onClick={() => handlePinClick('okhla')}
-            className={`absolute bottom-12 right-8 flex items-center gap-1.5 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md transition-transform hover:scale-105 ${
-              activePinId === 'okhla' ? 'scale-110 ring-2 ring-[#154212]' : ''
-            }`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full bg-[#154212]"></span>
-            <span className="text-[11px] font-bold text-[#181c20]">Okhla</span>
-          </button>
-
-          {/* Map Pin: Sanjay Van */}
-          <button
-            onClick={() => handlePinClick('sanjay-van')}
-            className={`absolute bottom-16 left-12 flex items-center gap-1.5 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md transition-transform hover:scale-105 ${
-              activePinId === 'sanjay-van' ? 'scale-110 ring-2 ring-[#154212]' : ''
-            }`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full bg-[#154212]"></span>
-            <span className="text-[11px] font-bold text-[#181c20]">Sanjay Van</span>
-          </button>
-
-          {/* Map Pin: Sultanpur */}
-          <button
-            onClick={() => handlePinClick('sultanpur')}
-            className={`absolute top-14 left-6 flex items-center gap-1.5 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md transition-transform hover:scale-105 ${
-              activePinId === 'sultanpur' ? 'scale-110 ring-2 ring-[#154212]' : ''
-            }`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full bg-[#154212]"></span>
-            <span className="text-[11px] font-bold text-[#181c20]">Sultanpur</span>
-          </button>
-
-          <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-semibold text-[#42493e] flex items-center gap-1 shadow-xs">
-            <span className="material-symbols-outlined text-[13px] text-[#154212]">forest</span>
-            <span>Delhi-NCR Corridor</span>
-          </div>
-        </div>
-      </div>
-
-      }
-      {externalDiscovery && <div className="relative px-4 my-1">
-        <HotspotMap hotspots={filteredHotspots} label="Map of filtered eBird hotspots" selectedId={activePinId} onSelect={setActivePinId} onOpen={(id) => {
+      <div className="relative px-4 my-1">
+        <HotspotMap hotspots={filteredHotspots} label="Map of hotspots" selectedId={activePinId} onSelect={setActivePinId} onOpen={(id) => {
           const hotspot = filteredHotspots.find((h) => h.id === id);
           if (hotspot) onSelectHotspot(hotspot);
         }} />
-        <div className="absolute top-2 right-6 z-10 rounded-lg bg-white/90 shadow-xs"><InformationDisclosure label="Map coverage and filters">        <p className="mt-2 text-[12px] text-[#42493e]">Select a pin to open its location. Popular filters by at least 15 species recorded all time. {nearbyEnabled ? 'Distances are straight-line estimates. Nearby uses 50 km within the configured eBird region; Popular and Saved include the whole loaded region.' : 'Choose a location for nearby filtering and distances; browsing the configured region still works.'}</p></InformationDisclosure></div>
-      </div>}
+      </div>
       {/* Location Cards List */}
       <div className="px-4 pt-1 flex flex-col gap-2.5">
         {filteredHotspots.map((hotspot) => {
@@ -198,11 +131,11 @@ export const HotspotsScreen: React.FC<HotspotsScreenProps> = ({
               <div className="flex flex-col min-w-0">
                 <h2 className="text-[16px] font-medium text-[#181c20] truncate">{hotspot.name}</h2>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px] text-[#42493e]">
-                  <span className="font-bold text-[#154212]">{hotspot.speciesCount ?? 'Unknown'} species{hotspot.source ? ' all time' : ''}</span>
-                  <span className="w-1 h-1 rounded-full bg-[#c2c9bb]"></span>
-                  <span title={hotspot.distanceKm == null ? 'Distance unavailable; choose a location for a straight-line estimate.' : 'Straight-line distance estimate'} aria-label={hotspot.distanceKm == null ? 'Distance unavailable' : undefined}>{hotspot.distanceKm == null ? 'Distance —' : `${hotspot.distanceKm.toFixed(1)} km`}</span>
-                  <span className="w-1 h-1 rounded-full bg-[#c2c9bb]"></span>
-                  <span title={`Best time: ${hotspot.bestTime}`} aria-label={`Best time: ${hotspot.bestTime}`}>Best time: {hotspot.source && hotspot.bestTime === 'Not available from eBird' ? '—' : hotspot.bestTime}</span>
+                  {hotspot.speciesCount != null && <span className="font-bold text-[#154212]">{hotspot.speciesCount} species</span>}
+                  {hotspot.distanceKm != null && <><span className="w-1 h-1 rounded-full bg-[#c2c9bb]"></span>
+                  <span title="Straight-line distance">{hotspot.distanceKm.toFixed(1)} km</span></>}
+                  {(hotspot.recentSightings?.length ?? 0) > 0 && <><span className="w-1 h-1 rounded-full bg-[#c2c9bb]"></span>
+                  <span title="Species reported here in the past 14 days">{hotspot.recentSightings!.length} seen recently</span></>}
                 </div>
               </div>
 
@@ -214,9 +147,10 @@ export const HotspotsScreen: React.FC<HotspotsScreenProps> = ({
         })}
         {filteredHotspots.length === 0 && (
           <p role="status" className="py-8 text-center text-[13px] text-[#42493e]">
-            No hotspots match this search and filter.
+            {activeFilter === 'saved' && !searchQuery.trim() ? 'No saved hotspots yet. Open a hotspot and tap Save.' : nearbyEnabled && activeFilter === 'nearby' && !searchQuery.trim() ? 'No hotspots within 50 km of your location.' : 'No hotspots match this search.'}
           </p>
         )}
+        {hotspots.length > 0 && <DataSource className="pt-2" />}
       </div>
     </div>
   );

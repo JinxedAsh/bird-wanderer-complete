@@ -258,12 +258,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </div>
               <div className="min-w-0">
                 <p className="text-[13px] font-bold text-[#181c20] truncate">Primary Field Rig</p>
-                <p className="text-[12px] text-[#42493e] truncate">{userProfile.primaryRig}</p>
+                <p className="text-[12px] text-[#42493e] truncate">{userProfile.primaryRig || 'Add your camera in Edit profile'}</p>
               </div>
             </div>
-            <span className="text-[10px] font-bold text-[#904d00] px-2 py-0.5 rounded bg-[#ffdcc3]">
+            {userProfile.primaryRig && <span className="text-[10px] font-bold text-[#904d00] px-2 py-0.5 rounded bg-[#ffdcc3]">
               Active
-            </span>
+            </span>}
           </div>
         </div>
       )}

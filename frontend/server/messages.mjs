@@ -89,7 +89,7 @@ export function messagesRouter(
       contactId: contact.id,
       contactName: contact.name,
       contactAvatar: '/bird-wanderer-logo.svg',
-      status: 'Presence unavailable · refreshes every 5 seconds',
+      status: 'Messages update automatically',
       lastMessage:
         latest?.text ||
         (latest?.attachment_kind === 'observation'
@@ -104,7 +104,7 @@ export function messagesRouter(
         : '',
       updatedAt: latest?.created_at || thread.created_at,
       topic: place || (gear ? 'Gear discussion' : ''),
-      contextLocation: place || 'No location attached',
+      contextLocation: place || '',
       contextLifeNumber: '',
       messages: [],
       unread: !!db

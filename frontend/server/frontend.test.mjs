@@ -28,14 +28,15 @@ let refreshHelpers;
 before(async () => {
   temporaryDirectory = mkdtempSync(join(root, '.stage1-render-'));
   const screens = {};
-  const names = ['InformationDisclosure','ObservationPinMap','ObservationLocationFields','ObservationConditionsPanel','CommunityScreen', 'EmailVerification', 'VerifyEmailScreen', 'RecoveryRequestSheet', 'ResetPasswordScreen', 'ChangePasswordSheet', 'EditObservationSheet', 'NotificationsScreen', 'FieldChatScreen', 'BirdQuizScreen', 'AuthScreen', 'LogObservationScreen', 'ProfileScreen', 'JournalScreen', 'LifeListScreen', 'GlobalSearchScreen', 'SettingsScreen', 'SpeciesDetailScreen', 'SpeciesPhoto', 'PhotoMetadata', 'PhotoPlanning', 'ReferenceComparisons', 'SpeciesInfoPanel', 'SpeciesRecording', 'HotspotMap', 'HotspotWeatherPanel', 'HotspotDetailScreen', 'HotspotAccess', 'HotspotsScreen', 'ExploreScreen', 'LocationPicker', 'Header'];
+  const names = ['InformationDisclosure','ObservationPinMap','ObservationLocationFields','ObservationConditionsPanel','CommunityScreen', 'EmailVerification', 'VerifyEmailScreen', 'RecoveryRequestSheet', 'ResetPasswordScreen', 'ChangePasswordSheet', 'EditObservationSheet', 'NotificationsScreen', 'FieldChatScreen', 'BirdQuizScreen', 'AuthScreen', 'LogObservationScreen', 'ProfileScreen', 'JournalScreen', 'LifeListScreen', 'GlobalSearchScreen', 'SettingsScreen', 'SpeciesDetailScreen', 'SpeciesPhoto', 'PhotoMetadata', 'PhotoPlanning', 'ReferenceComparisons', 'SpeciesInfoPanel', 'SpeciesRecording', 'HotspotMap', 'HotspotWeatherPanel', 'HotspotDetailScreen', 'HotspotAccess', 'HotspotsScreen', 'ExploreScreen', 'LocationPicker', 'Header', 'DataSource'];
   // Compile these existing TSX screens for Node rendering; no browser or new test framework.
   for (const relative of ['lib/observation-form.ts', 'lib/verification.ts', 'lib/pullToRefresh.ts', 'lib/recovery.ts', 'lib/native-push.ts', 'lib/push.ts', 'lib/navigation.ts', 'lib/useDialogFocus.ts', 'lib/maps.ts', 'lib/auth.ts', 'lib/discovery.ts', 'lib/activity.ts', 'lib/location.ts', 'lib/observations.ts', 'lib/alerts.ts', 'lib/retention.ts', 'lib/messages.ts', ...names.map((name) => `components/${name}.tsx`)]) {
     const output = join(temporaryDirectory, relative.replace(/\.tsx?$/, '.mjs'));
     mkdirSync(dirname(output), { recursive: true });
     const source = readFileSync(join(root, 'src', relative), 'utf8');
     const { code } = transformSync(source, { loader: 'tsx', format: 'esm', jsx: 'automatic', target: 'node24' });
-    writeFileSync(output, code.replace('./InformationDisclosure\"', './InformationDisclosure.mjs\"').replace('../lib/observation-form"','../lib/observation-form.mjs"').replace('./observation-form"','./observation-form.mjs"').replace('./ObservationPinMap"','./ObservationPinMap.mjs"').replace('./ObservationLocationFields"','./ObservationLocationFields.mjs"').replace('./ObservationConditionsPanel"','./ObservationConditionsPanel.mjs"').replace('./verification"', './verification.mjs"').replace('../lib/verification"', '../lib/verification.mjs"').replace('./EmailVerification"', './EmailVerification.mjs"').replace('../lib/pullToRefresh"', '../lib/pullToRefresh.mjs"').replace('./recovery"', './recovery.mjs"').replace('./RecoveryRequestSheet"', './RecoveryRequestSheet.mjs"').replace('../lib/recovery"', '../lib/recovery.mjs"').replace('./SpeciesRecording"', './SpeciesRecording.mjs"').replace('./native-push"','./native-push.mjs"').replace('./alerts"','./alerts.mjs"').replace('../lib/navigation"','../lib/navigation.mjs"').replace('./ChangePasswordSheet"', './ChangePasswordSheet.mjs"').replace('./EditObservationSheet"','./EditObservationSheet.mjs"').replace('../lib/messages"', '../lib/messages.mjs"').replace('../lib/useDialogFocus"', '../lib/useDialogFocus.mjs"').replace('../lib/maps"', '../lib/maps.mjs"').replace('./HotspotMap"', './HotspotMap.mjs"').replace('./HotspotAccess"', './HotspotAccess.mjs"').replace('./HotspotWeatherPanel"', './HotspotWeatherPanel.mjs"').replace('./SpeciesPhoto"', './SpeciesPhoto.mjs"').replace('./PhotoMetadata"', './PhotoMetadata.mjs"').replace('./PhotoPlanning"', './PhotoPlanning.mjs"').replace('./SpeciesInfoPanel"', './SpeciesInfoPanel.mjs"').replace('./ReferenceComparisons"', './ReferenceComparisons.mjs"').replace('../lib/discovery"', '../lib/discovery.mjs"').replace('../lib/auth"', '../lib/auth.mjs"').replace('../lib/retention"', '../lib/retention.mjs"').replace('./auth"', './auth.mjs"').replace('./maps"', './maps.mjs"').replace('../lib/location"', '../lib/location.mjs"').replace('../lib/observations"', '../lib/observations.mjs"'));
+    // Point every relative import at its compiled .mjs file.
+    writeFileSync(output, code.replace(/(from\s*["']|import\(\s*["'])(\.{1,2}\/[^"']+?)(["'])/g, (match, head, path, tail) => /\.(m?js|json|css)$/.test(path) ? match : `${head}${path}.mjs${tail}`));
   }
   for (const name of names) {
     const module = await import(pathToFileURL(join(temporaryDirectory, 'components', `${name}.mjs`)).href);
@@ -113,14 +114,14 @@ test('access renders sourced snapshots and missing fields, withholding overdue v
   const html = render('HotspotAccess', { access });
   assert.match(html, /conflicts/);
   assert.match(html, /&lt;script&gt;/);
-  assert.match(html, /Not verified from a reviewed official source/);
+  assert.match(html, /Not confirmed yet. Check with the site/);
   assert.match(html, /not a verified entrance/);
   assert.match(html, /reviewed 2026-10-04/);
   const stale = render('HotspotAccess', { access: { ...access, reviewOverdue: true } });
   assert.match(stale, /Review overdue/);
   assert.doesNotMatch(stale, /21:00/);
   assert.match(stale, /sundernursery.org/);
-  assert.match(render('HotspotAccess', {}), /No reviewed access information/);
+  assert.match(render('HotspotAccess', {}), /no visitor information for this hotspot yet/);
 });
 
 test('location distance preserves zero, handles the date line and rejects invalid points', () => {
@@ -148,17 +149,19 @@ test('device location requests once with finite timeout and explains permission/
 
 test('Explore location weather preserves zero values and distinguishes prompt, loading, errors and nearby emptiness', () => {
   const props = { observerName: 'Tester', speciesList: [], externalDiscovery: true, onNavigate: noop, onSelectSpecies: noop, onQuickLog: noop };
-  assert.match(render('ExploreScreen', props), /Choose location for weather/);
+  assert.match(render('ExploreScreen', props), /Set location for weather/);
   const location = { latitude: 0, longitude: 0, source: 'Manual' };
   assert.match(render('ExploreScreen', { ...props, location }), /Loading weather/);
   const weather = { current: { temperatureC: 0, windKmh: 0, condition: 'Clear', time: '2026-10-04T07:00' }, timezone: 'UTC', sourceUrl: 'https://open-meteo.com/', fetchedAt: '2026-10-04T07:00:00Z', cached: true };
   const html = render('ExploreScreen', { ...props, location, weather });
-  for (const value of ['0°C', '0 km/h', 'Open-Meteo', 'CC BY 4.0', 'Approximate point forecast', 'Reports within 50 km', 'Coverage is limited', 'cached']) assert.ok(html.includes(value), value);
+  for (const value of ['0°C', '0 km/h', 'Open-Meteo', 'CC BY 4.0', 'Forecast for the area', 'Reports within 50 km', 'No recent reports within 50 km']) assert.ok(html.includes(value), value);
+  assert.doesNotMatch(html, /cached|Retrieved|UTC/);
   assert.match(render('ExploreScreen', { ...props, location, weatherError: 'Provider unavailable', onRetryWeather: noop }), /Retry Explore weather/);
   const picker = render('LocationPicker', { location, onSelect: noop, onClose: noop });
   assert.match(picker, /Use device location/);
   assert.match(picker, /Location latitude/);
-  assert.match(picker, /Clear location and return to region/);
+  assert.match(picker, /Clear location/);
+  assert.match(picker, /not saved to your account/);
 });
 
 test('nearby hotspots filter the list and map consistently, retain zero distance and order closest first', () => {
@@ -187,8 +190,8 @@ test('location weather client rounds coordinates and keeps them out of the URL, 
 test('search uses supplied real history with safe text and no fabricated recent searches', () => {
   const empty = render('GlobalSearchScreen', { ...searchProps, externalDiscovery: true, onRecordSearch: noop });
   assert.doesNotMatch(empty, /Recent Searches|value="Roller"|Okhla Sanctuary/);
-  assert.match(empty, /Saved birds only/);
-  assert.match(empty, /Press Enter/);
+  assert.match(empty, /aria-pressed="false"[^>]*>[\s\S]*?Saved birds/);
+  assert.doesNotMatch(empty, /server|cache|IN-DL/);
   const html = render('GlobalSearchScreen', { ...searchProps, recentSearches: ['Wetland', '<script>bad</script>'], historyDisabled: true });
   assert.match(html, /Remove Wetland from recent searches/);
   assert.match(html, /&lt;script&gt;bad&lt;\/script&gt;/);
@@ -236,12 +239,13 @@ test('species information renders credited excerpts, missing sections, loading a
   const profile = { title: 'Indian roller', scientificName: 'Coracias benghalensis', summary: 'A bird of a broad range.', identification: { heading: 'Description', text: 'Blue wings <img onerror=steal()>' }, habitat: { heading: 'Habitat', text: 'Open woodland' }, behaviour: null, seasonality: null, source: 'Wikipedia', sourceUrl: 'https://en.wikipedia.org/wiki/Indian_roller', revisionUrl: 'https://en.wikipedia.org/w/index.php?oldid=123', historyUrl: 'https://en.wikipedia.org/w/index.php?action=history', revisionId: 123, matchUrl: 'https://www.wikidata.org/wiki/Q477133', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/' };
   const data = { speciesId: 'indrol2', profile, fetchedAt: '2026-10-04T12:00:00Z', cached: true };
   const html = render('SpeciesInformationContent', { data });
-  for (const value of ['Open woodland', 'No supported source section', 'Wikipedia contributors', 'Author history', 'CC BY-SA 4.0', 'General species-range', 'not a local sighting forecast', 'cached']) assert.ok(html.includes(value), value);
+  for (const value of ['Open woodland', 'Not covered in the article', 'Wikipedia contributors', profile.historyUrl, profile.revisionUrl, 'CC BY-SA 4.0']) assert.ok(html.includes(value), value);
+  assert.doesNotMatch(html, /cached|Retrieved|Wikidata/);
   assert.match(html, /&lt;img onerror=steal\(\)&gt;/);
   assert.doesNotMatch(html, /<img onerror|Best month:|Difficulty: Medium/);
-  assert.match(render('SpeciesInformationContent', {}), /Loading sourced species information/);
+  assert.match(render('SpeciesInformationContent', {}), /Loading species information/);
   assert.match(render('SpeciesInformationContent', { error: 'Provider unavailable', onRetry: noop }), /Retry species information/);
-  assert.match(render('SpeciesInformationContent', { data: { ...data, profile: null } }), /No matching species article/);
+  assert.match(render('SpeciesInformationContent', { data: { ...data, profile: null } }), /No Wikipedia article/);
   const panel = render('SpeciesInfoPanel', { speciesId: 'indrol2' });
   assert.match(panel, /<details id="species-information"/);
   assert.doesNotMatch(panel, /open=""/);
@@ -366,7 +370,7 @@ test('photo planning uses the current reference, separates general rules and nev
   const photo = { sourceUrl: 'https://commons.wikimedia.org/wiki/File:Kingfisher.jpg', exif };
   const props = { speciesId: 'comkin1', state: { speciesId: 'comkin1', photo, loading: false, error: '' }, onChooseHotspot: noop };
   const html = render('PhotoPlanning', props);
-  for (const text of ['1/400 s', 'f/9', 'ISO 200', '400 mm', 'EF100-400mm', photo.sourceUrl, 'One reference photo', 'not a minimum lens requirement', 'General technique guidance', 'Choose a reported hotspot', 'Trip saving is not connected', 'opening hours', 'camera permissions']) assert.ok(html.includes(text), text);
+  for (const text of ['1/400 s', 'f/9', 'ISO 200', '400 mm', 'EF100-400mm', 'One photographer', 'reach of your own lens', 'General technique', 'Choose a reported hotspot', 'opening hours', 'camera rules']) assert.ok(html.includes(text), text);
   assert.match(html, /may be too slow for fast flight/);
   assert.doesNotMatch(html, /2014-10-25|11:02:12|400mm\+ recommended|Best Time:|Optimal settings|Verified Field Shot/);
   const faster = render('PhotoPlanning', { ...props, state: { ...props.state, photo: { ...photo, exif: { ...exif, exposureSeconds: 0.0005 } } } });
@@ -387,8 +391,8 @@ test('photo planning remains useful with loading, failed, missing and partial ev
     assert.doesNotMatch(html, /145 mm|Duck.jpg/);
   }
   const missing = render('PhotoPlanning', { ...props, state: { ...props.state, photo: null } });
-  assert.match(missing, /No exposure or focal-length evidence/);
-  assert.match(missing, /General technique guidance/);
+  assert.match(missing, /no camera settings saved with it/);
+  assert.match(missing, /General technique/);
   assert.doesNotMatch(missing.replace(/<select[\s\S]*?<\/select>/g, ''), /ISO 400|1\/500|145 mm/);
   const failed = render('PhotoPlanning', { ...props, state: { ...props.state, photo: null, error: 'Provider unavailable' } });
   assert.match(failed, /Use Retry photo above/);
@@ -400,7 +404,7 @@ test('photo credit retains author/licence/source and escapes supplied markup wit
   const html = render('PhotoCredit', { photo, full: true });
   assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
   assert.doesNotMatch(html, /<img src=x/);
-  for (const text of ['CC BY-SA 4.0', photo.licenseUrl, photo.sourceUrl, 'Original creator', 'Required attribution', 'Source notice', 'Cropped to fit', 'not evidence of a recent sighting']) assert.ok(html.includes(text), text);
+  for (const text of ['CC BY-SA 4.0', photo.licenseUrl, photo.sourceUrl, 'Original creator', 'Required attribution', 'Source notice', 'Roller.jpg', 'cropped to fit']) assert.ok(html.includes(text), text);
   const bird = { id: 'indrol2', name: 'Indian Roller', scientificName: 'Coracias benghalensis', source: 'eBird', image: '/discovery-placeholder.svg' };
   const fallback = render('SpeciesPhoto', { species: bird, hero: true, frameClassName: 'photo-frame' });
   assert.match(fallback, /Loading photo: Indian Roller/);
@@ -411,7 +415,7 @@ test('photo credit retains author/licence/source and escapes supplied markup wit
 test('reference EXIF renders recorded units, partial missing fields and a timezone disclaimer without recommendations', () => {
   const exif = { status: 'available', cameraMake: 'NIKON CORPORATION', cameraModel: 'NIKON D300', lens: null, exposureSeconds: 0.002, aperture: 8, iso: 400, focalLengthMm: 390, capturedAt: '2011-10-11 09:27:38', utcOffset: null };
   const html = render('PhotoMetadata', { exif });
-  for (const value of ['Reference Photo EXIF', 'NIKON D300', '1/500 s', 'f/8', '400', '390 mm', '2011-10-11 09:27:38', 'timezone unknown', 'Unavailable', 'not independently verified or recommended settings']) assert.ok(html.includes(value), value);
+  for (const value of ['Camera settings for this photo', 'NIKON D300', '1/500 s', 'f/8', '400', '390 mm', '2011-10-11 09:27:38', '—', 'not a recommendation']) assert.ok(html.includes(value), value);
   assert.doesNotMatch(html, /GPS|Verified Field Shot|Best time|recommended lens/);
   const longExposure = render('PhotoMetadata', { exif: { ...exif, exposureSeconds: 2.5, utcOffset: '+05:30', cameraModel: '<script>steal()</script>' } });
   assert.match(longExposure, /2.5 s/);
@@ -422,7 +426,7 @@ test('reference EXIF renders recorded units, partial missing fields and a timezo
   assert.match(decimalExposure, /0.3 s/);
   assert.doesNotMatch(decimalExposure, /1\/3 s/);
   const missing = render('PhotoMetadata', { exif: { ...exif, status: 'unavailable' } });
-  assert.match(missing, /absent, stripped or unreadable/);
+  assert.match(missing, /no camera settings saved with it/);
   assert.doesNotMatch(missing, /NIKON|1\/500/);
 });
 
@@ -454,7 +458,8 @@ test('hotspot weather presents sourced forecasts, genuine zeros, missing values,
   assert.match(error, /Retry weather/);
   assert.doesNotMatch(error, /Loading hotspot weather/);
   const html = render('HotspotWeatherPanel', { weather });
-  for (const text of ['Asia/Kolkata', '0°C', '0%', 'Unavailable', '06:14', 'Open-Meteo', 'CC BY 4.0', 'Wind is elevated', 'pack a rain cover', 'raise ISO', 'general planning rules', 'not calculated golden-hour boundaries']) assert.ok(html.includes(text), text);
+  for (const text of ['0°C', '0%', 'Unavailable', '06:14', 'Open-Meteo', 'CC BY 4.0', 'It is windy', 'pack a rain cover', 'raise ISO', 'softest light']) assert.ok(html.includes(text), text);
+  assert.doesNotMatch(html, /cached|Retrieved|Model time/);
   assert.doesNotMatch(html, /Mist burns|Ideal for perched birds|Golden hour ends/);
 });
 
@@ -504,7 +509,8 @@ test('real map area and directions use source coordinates; missing coordinates p
   assert.match(missing, /Directions unavailable/);
   assert.doesNotMatch(missing, /google.com\/maps\/dir/);
   const list = render('HotspotsScreen', { hotspots: [hotspot], externalDiscovery: true, onSelectHotspot: noop, onNavigate: noop, showToast: noop });
-  assert.match(list, /aria-label="Map of filtered eBird hotspots"/);
+  assert.match(list, /aria-label="Map of hotspots"/);
+  assert.match(list, /href="https:\/\/ebird.org"/);
   assert.doesNotMatch(list, /Delhi Map View|Sultanpur/);
   assert.match(render('HotspotMap', { hotspots: [], label: 'Empty map' }), /No valid hotspot coordinates/);
 });
@@ -517,9 +523,11 @@ test('external species details show genuine reports without fabricated photos, c
   });
   assert.match(html, /Test Wetland/);
   assert.match(html, /aria-label="Open hotspot Test Wetland"/);
-  assert.match(html, /Latest report at each matching hotspot in IN-DL \+ IN-UP-GB, within 14 days/);
-  assert.match(html, /Status unavailable/);
-  assert.match(html, /Loading photo metadata/);
+  assert.match(html, /Delhi &amp; Noida/);
+  // Region codes may appear inside the eBird chart link, never as visible text.
+  assert.doesNotMatch(html.replace(/href="[^"]*"/g, ''), /IN-DL|IN-UP-GB|Retrieved|cached/);
+  assert.doesNotMatch(html, />(LC|Unknown|UNKNOWN)</);
+  assert.match(html, /Loading photo…/);
   assert.doesNotMatch(html, /Verified Field Shot|1\/2500|32 uploads|Okhla|Yamuna Bio-Diversity/);
 });
 
@@ -540,14 +548,14 @@ test('species field map uses only reported catalogue coordinates and retains unm
   };
   const html = render('SpeciesDetailScreen', props);
   assert.match(html, /aria-label="Reported hotspots for Common Kingfisher"/);
-  assert.match(html, /1 of 3 reported hotspots have coordinates/);
+  assert.match(html, /1 of 3 places are shown on the map/);
   for (const name of ['Matched wetland', 'Unmatched report', 'Invalid catalogue point']) assert.match(html, new RegExp(`aria-label="Open hotspot ${name}"`));
   assert.doesNotMatch(html, /Unreported catalogue site/);
-  assert.match(html, /Individual count unavailable/);
+  assert.match(html, /2 Nov 2026, 08:00<\/span>/);
   assert.match(html, /aria-expanded="true" aria-controls="species-reported-hotspots"/);
   assert.match(html, /LOG YOUR SIGHTING/);
   const missing = render('SpeciesDetailScreen', { ...props, hotspots: [] });
-  assert.match(missing, /0 of 3 reported hotspots have coordinates/);
+  assert.match(missing, /0 of 3 places are shown on the map/);
   assert.doesNotMatch(missing, /aria-label="Reported hotspots for/);
   assert.match(missing, /Unmatched report/);
 });
@@ -555,7 +563,6 @@ test('species field map uses only reported catalogue coordinates and retains unm
 test('reference gallery starts with a truthful loading state and leaves comparison mode available', () => {
   const gallery = render('ReferenceComparisons', { speciesId: 'comkin1', gallery: true });
   assert.match(gallery, /Reference Field Captures/);
-  assert.match(gallery, /Wikimedia Commons references, not community uploads or recent sightings/);
   assert.match(gallery, /Loading reference photographs/);
   assert.doesNotMatch(gallery, /0 references|32 uploads|\+29|Compare reference photographs/);
   const comparison = render('ReferenceComparisons', { speciesId: 'comkin1' });
@@ -567,11 +574,12 @@ test('external hotspot and search distinguish all-time species totals from unava
   const hotspot = { id: 'L123', name: 'Roller Wetland', source: 'eBird', sourceUrl: 'https://ebird.org/hotspot/L123', region: 'IN-DL', coordinates: '28.5, 77.2', imageUrl: '/discovery-placeholder.svg', speciesCount: 0, activeTodayCount: null, distanceKm: null, recentSightings: [], photos: [], speciesList: [] };
   const html = render('HotspotDetailScreen', { hotspot, onToggleSave: noop, onNavigate: noop, onSelectSpeciesByName: noop, showToast: noop });
   assert.match(html, /Species recorded all time \(0\)/);
-  assert.match(html, /Unavailable/);
+  assert.match(html, /—/);
   assert.doesNotMatch(html, /06:00|06:14|68%|Wetland Hotspot|Barrage Watchtower/);
   const search = render('GlobalSearchScreen', { ...searchProps, hotspots: [hotspot] });
-  assert.match(search, /0 species recorded all time/);
-  assert.match(search, /Distance unavailable/);
+  assert.match(search, /0 species recorded/);
+  assert.match(search, /Delhi/);
+  assert.doesNotMatch(search, /km away|IN-DL/);
   assert.doesNotMatch(search, /species active today/);
   const list = render('HotspotsScreen', { hotspots: [hotspot], externalDiscovery: true, onSelectHotspot: noop, onNavigate: noop, showToast: noop });
   assert.match(list, /Roller Wetland/);
@@ -580,7 +588,7 @@ test('external hotspot and search distinguish all-time species totals from unava
 
 test('external explore works with an empty catalogue and does not show sample weather or notable reports', () => {
   const html = render('ExploreScreen', { observerName: 'Test Birder', speciesList: [], externalDiscovery: true, discoveryRegion: 'IN-DL', onSelectSpecies: noop, onNavigate: noop, onQuickLog: noop });
-  assert.match(html, /No recent species reports loaded/);
+  assert.match(html, /No recent reports yet/);
   assert.doesNotMatch(html, /24°C|8 km\/h|Seen 2h ago|14 nearby/);
 });
 
@@ -607,7 +615,8 @@ test('hotspot detail displays its own reports and never reuses regional reports 
   assert.doesNotMatch(failed, /Wrong Regional Bird/);
   const loaded = render('HotspotDetailScreen', { ...props, details: { hotspotId: 'L123', recentSightings: [{ speciesId: 'comkin1', species: 'Common Kingfisher', scientific: 'Alcedo atthis', image: '/test.svg', count: 0, timeAgo: '2026-10-04 07:15' }], speciesList: [], unmatchedTaxa: 0, fetchedAt: '2026-10-04T00:00:00Z', cached: false } });
   assert.match(loaded, /Common Kingfisher/);
-  assert.match(loaded, /0 individuals/);
+  assert.match(loaded, /0 birds/);
+  assert.match(loaded, /4 Oct 2026, 07:15/);
   assert.match(loaded, /role="button" tabindex="0"/);
   assert.doesNotMatch(loaded, /Wrong Regional Bird/);
 });
@@ -616,31 +625,35 @@ test('search renders its only matching hotspot and every matching bird', () => {
   const html = render('GlobalSearchScreen', {
     ...searchProps,
     speciesList: [
-      { id: 'roller-a', name: 'First Roller', scientificName: 'First scientific name', image: '/first.jpg', sightingsThisWeek: 0 },
-      { id: 'roller-b', name: 'Second Roller', scientificName: 'Second scientific name', image: '/second.jpg', sightingsThisWeek: 3 },
+      { id: 'roller-a', name: 'First Roller', scientificName: 'First scientific name', image: '/first.jpg', recentObservations: [] },
+      { id: 'roller-b', name: 'Second Roller', scientificName: 'Second scientific name', image: '/second.jpg', recentObservations: [{ hotspotId: 'L1', location: 'Roller Wetland', observedAt: '2026-10-04 07:15' }] },
     ],
-    hotspots: [{ id: 'only', name: 'Roller Wetland', region: 'Test region', distanceKm: 2, activeTodayCount: 0 }],
+    hotspots: [{ id: 'only', name: 'Roller Wetland', region: 'Test region', distanceKm: 2, speciesCount: 0 }],
   });
   assert.match(html, /First Roller/);
   assert.match(html, /Second Roller/);
   assert.match(html, /Roller Wetland/);
-  assert.match(html, /0 local sightings this week/);
-  assert.match(html, /0 species active today/);
+  assert.match(html, /No recent reports/);
+  assert.match(html, /Seen 4 Oct 2026/);
+  assert.match(html, /0 species recorded/);
+  assert.match(html, /2.0 km away/);
 });
 
-test('an empty catalogue and no matching community records show the empty search state', () => {
+test('an empty catalogue shows no sample content and waits for the people/post lookup before claiming no results', () => {
   const html = render('GlobalSearchScreen', searchProps);
-  assert.match(html, /No wanderings found/);
+  assert.match(html, /Loading people and posts/);
+  assert.doesNotMatch(html, /No wanderings found/);
   assert.doesNotMatch(html, /Maya Singh/);
   assert.doesNotMatch(html, /src="\/bird.jpg"/);
 });
 
-test('species details preserve a genuine zero sightings count', () => {
+test('species details show no recent reports honestly instead of a fabricated count', () => {
   const html = render('SpeciesDetailScreen', {
-    species: { id: 'zero', name: 'Test Bird', scientificName: 'Test scientific name', image: '/test.jpg', sightingsThisWeek: 0 },
+    species: { id: 'zero', name: 'Test Bird', scientificName: 'Test scientific name', image: '/test.jpg', recentObservations: [] },
     onNavigate: noop, onQuickLog: noop, showToast: noop,
   });
-  assert.match(html, />0<\/span>/);
+  assert.match(html, />None<\/span>/);
+  assert.match(html, /past 14 days/);
 });
 
 test('settings and header display the supplied account identity', () => {
@@ -671,8 +684,8 @@ test('seasonal planning validates regional links and keeps reporting frequency d
   for (const region of [undefined, '', 'Delhi NCR', 'IN-DL&x=1', 'https://example.com', '<script>']) assert.equal(planningHelpers.seasonalChartUrl(region), null);
   const props = { speciesId: 'indrol2', speciesName: 'Indian Roller', region: 'IN-DL', state: { speciesId: 'previous', photo: null, loading: false, error: '' }, onChooseHotspot: noop };
   const html = render('PhotoPlanning', props);
-  for (const text of ['Find Indian Roller', 'share of complete checklists', 'Historical seasonal values are not imported', 'Planned shot', 'not a measured species difficulty rating', 'Choose a test shutter', 'not an optimal preset', 'Aperture']) assert.ok(html.includes(text), text);
-  assert.match(render('PhotoPlanning', { ...props, region: undefined }), /No valid eBird region/);
+  for (const text of ['find Indian Roller', 'eBird seasonal chart for Delhi', 'Taller bars', 'Planned shot', 'Choose a test shutter', 'A rough guide']) assert.ok(html.includes(text), text);
+  assert.match(render('PhotoPlanning', { ...props, region: undefined }), /No seasonal chart is available/);
   assert.doesNotMatch(html, /equivalent ISO is approximately/);
 });
 
@@ -680,7 +693,8 @@ test('seasonal planning validates regional links and keeps reporting frequency d
 test('sign-in reuses local branding, truthful copy and associated accessible form labels', () => {
   const html = render('AuthScreen', { onLoginSuccess: noop, showToast: noop });
   assert.match(html, /src="\/bird-wanderer-logo.svg"/);
-  assert.match(html, /EXTERNAL DISCOVERY &amp; FIELD PLANNING/);
+  assert.match(html, /BIRDS · HOTSPOTS · FIELD JOURNAL/);
+  assert.doesNotMatch(html, /sourabh/i);
   assert.doesNotMatch(html, /12,480|googleusercontent|ACTIVE SIGHTINGS LOGGED/);
   assert.match(html, /for="auth-email"/);
   assert.match(html, /id="auth-email"/);
@@ -697,7 +711,7 @@ test('long compact photo credits disclose the complete source text without clipp
   const compact = render('PhotoCredit', { photo });
   assert.match(compact, /<details[^>]*><summary[^>]*aria-label="Full photo credit and rights"/);
   assert.doesNotMatch(compact, /<details open/);
-  for (const text of [author, photo.licenseUrl, photo.sourceUrl, photo.credit, photo.attribution, photo.usageTerms, photo.restrictions, 'Full photo credit &amp; rights']) assert.ok(compact.includes(text), text);
+  for (const text of [author, photo.licenseUrl, photo.sourceUrl, photo.credit, photo.attribution, photo.usageTerms, photo.restrictions, 'Photo credit']) assert.ok(compact.includes(text), text);
   const short = render('PhotoCredit', { photo: { ...photo, author: 'Short author' } });
   assert.match(short, /Photo: Short author/);
   assert.match(short, /<details[^>]*><summary[^>]*aria-label="Full photo credit and rights"/);
@@ -792,7 +806,7 @@ test('field chat starts without demo people, fabricated replies or location clai
 
 test('global search describes real access-controlled lookup and social notification filters have no samples',()=>{
   const html=render('GlobalSearchScreen',{...searchProps,externalDiscovery:true});
-  assert.match(html,/Loading people and posts/);assert.match(html,/searched on the server/);
+  assert.match(html,/Loading people and posts/);assert.doesNotMatch(html,/searched on the server|current access/);
   assert.doesNotMatch(html,/demonstration data|Maya Singh|No wanderings found/);
   const notices=render('NotificationsScreen',{notifications:[],onMarkAllRead:noop,onSelectNotification:noop,onNavigate:noop});
   assert.match(notices,/followers/);assert.doesNotMatch(notices,/Maya Singh/);
@@ -827,7 +841,7 @@ test('Android connection recovery is reachable on login before an account sessio
 test('journal editor loads the owned source before allowing edits and describes preserved photo evidence',()=>{
   const html=render('EditObservationSheet',{id:'fixture',speciesList:[],hotspots:[],onClose:noop,onSaved:noop,showToast:noop});
   assert.match(html,/role="dialog"/);assert.match(html,/Edit observation/);assert.match(html,/Loading your record/);
-  assert.match(html,/photograph, extracted EXIF and original publication date are preserved/);
+  assert.match(html,/The photograph, its camera settings and the original posting date stay the same/);
   assert.doesNotMatch(html,/Observation changes saved|Editing observation record/);
 });
 
@@ -1020,7 +1034,7 @@ test('conditions client sends rounded coordinates without photo or identity and 
     globalThis.fetch = async () => Response.json({conditionsId:id,conditions:{...snapshot,latitude:0}});
     await assert.rejects(module.observations.conditions({latitude:28.56789,longitude:77.12345},snapshot.observedAt,'',new AbortController().signal),/Unexpected/);
     assert.match(module.observationEntry({ ...snapshot, exif:{},conditions:snapshot,observedAt:snapshot.observedAt }).weather,/0°C/);
-    assert.match(module.observationPost({ ...snapshot, exif:{},conditions:snapshot,observedAt:snapshot.observedAt }).weather.description,/Archive estimate/);
+    assert.match(module.observationPost({ ...snapshot, exif:{},conditions:snapshot,observedAt:snapshot.observedAt }).weather.description,/Estimated for the hour/);
   } finally { globalThis.fetch = previous; }
 });
 
@@ -1037,7 +1051,7 @@ test('supporting information stays in a labelled native disclosure without losin
 test('notification settings preserve readable forecast thresholds inside the information control', () => {
   const html = render('NotificationsScreen', { notifications: [], onMarkAllRead: noop, onSelectNotification: noop, onNavigate: noop });
   assert.match(html, /aria-label="Alert settings and subscriptions"/);
-  assert.ok(html.includes('rain ≤20%, wind ≤15 km/h'));
+  assert.ok(html.includes('rain chance up to 20%, wind up to 15 km/h'));
   assert.match(html, /Sighting alerts enabled/);
   assert.match(html, /Manage subscriptions/);
 });

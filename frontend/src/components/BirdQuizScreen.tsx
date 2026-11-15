@@ -91,9 +91,7 @@ export const BirdQuizScreen: React.FC<BirdQuizScreenProps> = ({
     <details className="mt-4 rounded-xl bg-white p-3 text-[13px]">
       <summary className="min-h-11 cursor-pointer font-bold">Photography challenges · this week</summary>
       <p className="mb-2 text-[12px]">
-        Based on your current journal records published this week ({data.stats.timezone}). User-reported
-        progress, not independent identification or proof of a visit. Deleting a record updates progress; no
-        challenge XP is awarded.
+        Counts the records you added to your journal this week. Deleting a record lowers the count.
       </p>
       {data.stats.challenges.map((challenge) => (
         <div key={challenge.id} className="my-3">
@@ -133,9 +131,7 @@ export const BirdQuizScreen: React.FC<BirdQuizScreenProps> = ({
             {xp} XP · {streak} day streak · {data.stats.completedSessions} completed sessions
           </p>
           <p className="my-3 text-[12px]">
-            Ten source-matched, credited reference photos. Progress is saved after each answer; correct
-            answers earn 50 XP once. Complete a session to record a practice day ({data.stats.timezone}). This
-            is learning practice, not a verified sighting assessment.
+            Ten photo questions. Each correct answer earns 50 XP, and your progress is saved as you go. Finish a session to keep your daily streak.
           </p>
           <button
             type="button"
@@ -144,7 +140,7 @@ export const BirdQuizScreen: React.FC<BirdQuizScreenProps> = ({
             className="min-h-12 w-full rounded-xl bg-[#2d5a27] px-3 font-bold text-white"
           >
             {busy
-              ? 'Loading credited photographs…'
+              ? 'Loading photographs…'
               : data.session
                 ? 'Start another practice'
                 : 'Start 10-question practice'}
@@ -209,7 +205,7 @@ export const BirdQuizScreen: React.FC<BirdQuizScreenProps> = ({
             <span className="text-[11px] font-semibold">Field Identification</span>
           </div>
         </div>
-        <PhotoCredit photo={question.photoCredit} overlay full><p>Source filenames may name the species; this is practice, not a closed-book exam.</p></PhotoCredit>
+        <PhotoCredit photo={question.photoCredit} overlay full><p>The file name above may give the answer away.</p></PhotoCredit>
       </figure>
 
       {photoFailed && (
