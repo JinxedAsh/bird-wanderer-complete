@@ -32,7 +32,7 @@ export function createRecordingService({ fetchImpl = fetch, now = Date.now, ttl 
     const url = new URL(`https://${host}/w/api.php`);
     url.search = new URLSearchParams({ ...params, format: 'json' });
     let response;
-    try { response = await fetchImpl(url, { headers: { 'User-Agent': 'BirdWanderer/0.1 (https://github.com/JinxedAsh/bird-wanderer)' }, signal: AbortSignal.timeout(8000) }); }
+    try { response = await fetchImpl(url, { headers: { 'User-Agent': 'BirdWanderer/0.1 (https://github.com/JinxedAsh/bird-wanderer-complete)' }, signal: AbortSignal.timeout(8000) }); }
     catch { throw new RecordingError(503, 'Cannot reach the recording provider. Please try again.'); }
     if (!response.ok) throw new RecordingError(503, 'The recording provider is unavailable. Please try again.');
     let data;
