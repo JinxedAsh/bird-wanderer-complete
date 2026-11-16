@@ -220,7 +220,21 @@ test('detail caches share loads, expire, and retry failures without mixing entit
   const malformed = createDiscoveryService({ apiKey: 'test-key', fetchImpl: detailUpstream([], (url) => url.pathname.includes('/product/spplist/') ? [null] : undefined) });
   await assert.rejects(malformed.hotspotDetails('L123'), { status: 502 });
   const wrongLocation = createDiscoveryService({ apiKey: 'test-key', fetchImpl: detailUpstream([], (url) => url.pathname.includes('/data/obs/L123/') ? [{ ...observations[0], locId: 'L456' }] : undefined) });
-  await assert.rejects(wrongLocation.hotspotDetails('L123'), { status: 502 });
+  assert.deepEqual((await wrongLocation.hotspotDetails('L123')).recentSightings, []);
+});
+
+test('hotspot details keep only reports filed at that hotspot when eBird adds linked hotspots', async () => {
+  const kingfisher = { ...observations[0], speciesCode: 'comkin1', comName: 'Common Kingfisher', sciName: 'Alcedo atthis' };
+  const service = createDiscoveryService({ apiKey: 'test-key', fetchImpl: detailUpstream([], (url) => url.pathname.includes('/data/obs/L123/') ? [
+    { ...kingfisher, howMany: 2 },
+    { ...observations[0], locId: 'L456', locName: 'Another Wetland', howMany: 9 },
+    { ...kingfisher, locId: 'L999', locName: 'Linked gate', howMany: 5 },
+  ] : undefined) });
+  const result = await service.hotspotDetails('L123');
+  assert.deepEqual(result.recentSightings.map((sight) => [sight.speciesId, sight.count]), [['comkin1', 2]]);
+  assert.equal(JSON.stringify(result).includes('Another Wetland'), false);
+  assert.equal(JSON.stringify(result).includes('Linked gate'), false);
+  assert.deepEqual(result.speciesList.map((bird) => bird.speciesId), ['comkin1', 'indrol2']);
 });
 
 test('detail HTTP routes keep session protection and expose ID-safe species/hotspot responses', async () => {

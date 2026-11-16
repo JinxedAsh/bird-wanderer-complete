@@ -183,8 +183,11 @@ export function createDiscoveryService({ apiKey = '', region = 'IN-DL', addition
           request(`data/obs/${hotspotId}/recent`, { back: '14', includeProvisional: 'false', maxResults: '10000' }),
           request(`product/spplist/${hotspotId}`, {}),
         ]);
-        const reports = checkReports(rawReports);
-        if (reports.some((obs) => obs.locId !== hotspotId) || codes.some((code) => typeof code !== 'string')) throw new DiscoveryError(502, 'eBird returned unsupported hotspot detail records.');
+        if (codes.some((code) => typeof code !== 'string')) throw new DiscoveryError(502, 'eBird returned unsupported hotspot detail records.');
+        // eBird can add reports from linked hotspots (Okhla Bird Sanctuary also returns its Gate,
+        // Tar Road and Chilla Khadar reports). Those places have their own pages, so keep only
+        // reports filed at this hotspot instead of failing the whole page.
+        const reports = checkReports(rawReports).filter((obs) => obs.locId === hotspotId);
         const knownSpecies = new Map(catalogue.species.map((bird) => [bird.id, bird]));
         const speciesCodes = [...new Set(codes)];
         const speciesList = speciesCodes.filter((code) => knownSpecies.has(code)).map((code) => {

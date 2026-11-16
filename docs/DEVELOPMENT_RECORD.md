@@ -1133,6 +1133,21 @@ pnpm cleanup:test-data --backup <another new folder> --server-stopped --apply --
 4. **Why need a keep-list?** Heuristics can be wrong; naming the real accounts guarantees they survive even if one looks like test data.
 5. **Why are photo files deleted after the commit?** If the database change failed, the files would still be needed; any file left behind is removed as an orphan on the next run.
 
+### Entry 66 — Okhla Bird Sanctuary hotspot page failed to load its reports
+
+**Date/group:** 16 November 2026 IST; found while comparing branch `cleanup/frontend-design-match` with main on a local run with a real eBird key. Fixed by Anirudh Jain on the same branch. The fault was already present on main.
+
+**Problem:** the Okhla Bird Sanctuary hotspot page (L2362886) showed "eBird returned unsupported hotspot detail records." and no recent sightings, while every other hotspot tested (Okhla Barrage, Okhla Bird Sanctuary Gate and Tar Road, Asola, Lodhi Gardens, Dhanauri, Najafgarh, Yamuna Biodiversity Park and others) loaded normally. For this hotspot eBird's recent-observations response (149 reports) also contained 41 reports filed at linked hotspots: Okhla Bird Sanctuary Gate, Okhla Bird Sanctuary (Tar Road) and Chilla Khadar--Mayur Vihar. The server treated any report from another location as a malformed response and rejected the whole page.
+
+**What changed and why:** `server/discovery.mjs` now keeps only the reports filed at the requested hotspot and drops the others instead of failing. Those places have their own pages, so nothing is lost and no report is shown under the wrong hotspot. A species list that is not a list of species codes is still rejected.
+
+**Checks:** a new test feeds a response that mixes this hotspot's report with reports from two other locations and checks that only this hotspot's report is returned; the existing wrong-location test now expects an empty list instead of an error. Both fail on the previous code and pass now. Locally the Okhla Bird Sanctuary page loads its recent sightings.
+
+**Viva Notes:**
+
+1. **Why not show the linked hotspots' reports too?** Each report is shown at the place it was filed; showing Gate reports under the Sanctuary page would misplace them, and the Gate has its own page.
+2. **Why did only Okhla fail?** It is the only tested hotspot for which eBird returns reports from linked locations.
+
 ## 4. How the current application fits together
 
 The interface is what the user sees and interacts with. The backend is the program that receives requests and checks account information. The database is where persistent account information is saved.
