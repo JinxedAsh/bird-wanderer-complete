@@ -1,5 +1,5 @@
 import React from 'react';
-import type { HotspotWeather } from '../lib/discovery';
+import { fieldTime, type HotspotWeather } from '../lib/discovery';
 
 interface HotspotWeatherPanelProps {
   weather?: HotspotWeather;
@@ -24,11 +24,11 @@ export function lightWindows(day: HotspotWeather['days'][number]) {
 
 export const HotspotWeatherPanel: React.FC<HotspotWeatherPanelProps> = ({ weather, error, onRetry }) => {
   if (error) return <div role="alert" className="text-[12px] text-[#42493e]"><p>{error}</p><button type="button" onClick={onRetry} className="mt-2 font-semibold text-[#154212] underline">Retry weather</button></div>;
-  if (!weather) return <p role="status" className="text-[12px] text-[#42493e]">Loading hotspot weather...</p>;
+  if (!weather) return <p role="status" className="text-[12px] text-[#42493e]">Loading hotspot weather…</p>;
   const { current } = weather;
   return (
     <div className="space-y-3 text-[12px] text-[#42493e]">
-      <p>Forecast for this hotspot • {weather.timezone}. Model time: {current.time.replace('T', ' ')}. Not a reading from an on-site weather station.</p>
+      <p>Forecast for this hotspot, updated {fieldTime(current.time)}.</p>
       <div className="grid grid-cols-2 gap-2">
         {[
           ['Temperature', measurement(current.temperatureC, '°C')], ['Wind speed', measurement(current.windKmh, ' km/h')],
@@ -38,27 +38,24 @@ export const HotspotWeatherPanel: React.FC<HotspotWeatherPanelProps> = ({ weathe
       </div>
       {weather.days.map((day) => {
         const windows = lightWindows(day);
-        return <div key={day.date} className="rounded-xl bg-[#f1f4f9] p-2.5"><p className="font-semibold text-[#181c20]">{day.date} • {weather.timezone}</p><p>Sunrise: {clock(day.sunrise)} • Sunset: {clock(day.sunset)}</p>
-          {windows ? <p>Approximate light-planning windows: {windows.morning} and {windows.evening}. Check opening hours before choosing either.</p> : <p>Light-planning windows unavailable for this date.</p>}
+        return <div key={day.date} className="rounded-xl bg-[#f1f4f9] p-2.5"><p className="font-semibold text-[#181c20]">{fieldTime(day.date)}</p><p>Sunrise: {clock(day.sunrise)} • Sunset: {clock(day.sunset)}</p>
+          {windows && <p>Best light: about {windows.morning} and {windows.evening}.</p>}
         </div>;
       })}
       <div className="overflow-x-auto">
-        <p className="mb-1 font-semibold text-[#181c20]">Next hourly forecasts (up to 6 hours)</p>
-        {weather.hourly.length ? <table className="w-full text-left text-[11px]"><thead><tr><th className="py-1">Local time</th><th>Temp</th><th>Rain chance</th><th>Wind</th></tr></thead><tbody>{weather.hourly.slice(0, 6).map((row) => <tr key={row.time} className="border-t border-[#e0e3e8]"><td className="py-1.5">{row.time.slice(5).replace('T', ' ')}</td><td>{measurement(row.temperatureC, '°C')}</td><td>{measurement(row.rainProbability, '%')}</td><td>{measurement(row.windKmh, ' km/h')}</td></tr>)}</tbody></table> : <p>No upcoming hourly forecast available.</p>}
+        <p className="mb-1 font-semibold text-[#181c20]">Next few hours</p>
+        {weather.hourly.length ? <table className="w-full text-left text-[11px]"><thead><tr><th className="py-1">Time</th><th>Temp</th><th>Rain chance</th><th>Wind</th></tr></thead><tbody>{weather.hourly.slice(0, 6).map((row) => <tr key={row.time} className="border-t border-[#e0e3e8]"><td className="py-1.5">{row.time.slice(11)}</td><td>{measurement(row.temperatureC, '°C')}</td><td>{measurement(row.rainProbability, '%')}</td><td>{measurement(row.windKmh, ' km/h')}</td></tr>)}</tbody></table> : <p>No hourly forecast available right now.</p>}
       </div>
       <div className="rounded-xl bg-[#f1f4f9] p-2.5 space-y-1">
         <p className="font-semibold text-[#181c20]">Photography planning tips</p>
-        <p>Use the first hour after sunrise or last hour before sunset as approximate light windows. Cloud, terrain and site access can change the light; these are general planning rules, not calculated golden-hour boundaries.</p>
-        {(current.windKmh !== null && current.windKmh >= 20) && <p>Wind is elevated: stabilize long lenses and allow for moving branches.</p>}
-        {(current.precipitationMm !== null && current.precipitationMm > 0) && <p>Precipitation is forecast for the current interval: pack a rain cover and check upcoming rain chances.</p>}
+        <p>The first hour after sunrise and the last hour before sunset usually give the softest light.</p>
+        {(current.windKmh !== null && current.windKmh >= 20) && <p>It is windy: steady long lenses and expect moving branches.</p>}
+        {(current.precipitationMm !== null && current.precipitationMm > 0) && <p>Rain is forecast: pack a rain cover and check the rain chance below.</p>}
         {(current.cloudCoverPercent !== null && current.cloudCoverPercent >= 80) && <p>Heavy cloud may soften light; be ready to raise ISO if shutter speed drops.</p>}
-        <p>These tips do not predict bird activity or prescribe camera settings. Confirm opening hours and access locally before travelling.</p>
-        <p>For a practical forecast check, compare daylight hours with rain probability ≤20% and wind ≤15 km/h. These are conservative preparation heuristics, not optimal weather or a species-specific success model. Missing measurements cannot qualify.</p>
         {weather.hourly.filter((row) => row.rainProbability !== null && row.windKmh !== null && row.rainProbability <= 20 && row.windKmh <= 15
-          && weather.days.some((day) => day.sunrise && day.sunset && row.time >= day.sunrise && row.time <= day.sunset)).slice(0, 6).map((row) => <p key={row.time}>Forecast to consider: {row.time.replace('T', ' ')} ({weather.timezone}) • rain {row.rainProbability}% • wind {row.windKmh} km/h. Confirm access and current conditions.</p>)}
-        <p>No matching row shown means no upcoming forecast meets all checks in the available data; it does not mean photography is impossible. Rain/cloud/wind can change exposure and handling, but do not justify matching current forecasts to a reference photograph's unknown historical conditions.</p>
+          && weather.days.some((day) => day.sunrise && day.sunset && row.time >= day.sunrise && row.time <= day.sunset)).slice(0, 6).map((row, index) => <p key={row.time}>{index === 0 ? 'Calm, dry daylight hours: ' : ''}{fieldTime(row.time)} · rain {row.rainProbability}% · wind {row.windKmh} km/h</p>)}
       </div>
-      <p><a className="underline" href="https://open-meteo.com/" target="_blank" rel="noreferrer">Weather data by Open-Meteo</a> • <a className="underline" href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>. Display adapted for trip planning. Retrieved {weather.fetchedAt} (UTC){weather.cached ? ' • cached' : ''}.</p>
+      <p className="text-[11px]"><a className="underline" href="https://open-meteo.com/" target="_blank" rel="noreferrer">Weather data by Open-Meteo</a> • <a className="underline" href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a></p>
     </div>
   );
 };

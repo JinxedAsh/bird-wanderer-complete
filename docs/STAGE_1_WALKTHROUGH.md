@@ -2,7 +2,7 @@
 
 Implemented 4 October 2026. This increment preserves React, Express, SQLite, the existing screen layouts and working authentication. It does not implement later-stage persistence, external discovery, maps, uploads/EXIF, privacy enforcement, messaging, alerts or gamification.
 
-The user confirmed that the final deliverable must be an Android app/APK. The current runtime remains a mobile web interface. Android packaging and physical-device verification remain required future work; this stage does not claim to deliver an Android installation package.
+The final deliverable must be an Android app/APK. The current runtime remains a mobile web interface. Android packaging and physical-device verification remain required future work; this stage does not claim to deliver an Android installation package.
 
 ## Changes and how they work
 
@@ -41,7 +41,7 @@ Rendering tests do not exercise clicks, keyboard events, CSS layout or browser c
 
 ## Remaining boundaries
 
-Exact visual fidelity and browser interaction have not been certified because agent browser access was previously denied. Layouts/styles were preserved except functionality/accessibility adjustments. The search, community and hotspot reference images were inspected.
+Exact visual fidelity and browser interaction have not been certified because browser testing was not yet available at this stage. Layouts/styles were preserved except functionality/accessibility adjustments. The search, community and hotspot reference images were inspected.
 
 Journal/life-list/profile aggregate reconciliation, observation photograph/species consistency, fabricated metadata, privacy settings enforcement, notification destinations, simulated chat, quiz completion and persistent records remain for later stages. Those known limitations are not solved by this increment. Real registration/login and persistent sessions remain implemented.
 

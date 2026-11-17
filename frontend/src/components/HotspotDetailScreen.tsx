@@ -1,7 +1,6 @@
-import { InformationDisclosure } from './InformationDisclosure';
 import React, { useMemo, useState } from 'react';
-import { Hotspot, ScreenType, BirdSpecies } from '../types';
-import type { HotspotDetails, HotspotWeather } from '../lib/discovery';
+import { Hotspot, ScreenType, CommunityPost } from '../types';
+import { fieldTime, regionName, type HotspotDetails, type HotspotWeather } from '../lib/discovery';
 import { hotspotDirectionsUrl } from '../lib/maps';
 import { HotspotMap } from './HotspotMap';
 import { HotspotAccess } from './HotspotAccess';
@@ -21,8 +20,9 @@ interface HotspotDetailScreenProps {
   hotspot: Hotspot;
   onToggleSave: (hotspotId: string) => void;
   onNavigate: (screen: ScreenType) => void;
-  onSelectSpeciesByName: (name: string) => void;
   showToast: (message: string) => void;
+  fieldPhotos?: CommunityPost[];
+  onOpenPost?: (id: string) => void;
 }
 
 export const HotspotDetailScreen: React.FC<HotspotDetailScreenProps> = ({
@@ -37,21 +37,21 @@ export const HotspotDetailScreen: React.FC<HotspotDetailScreenProps> = ({
   onSelectSpeciesById,
   hotspot,
   onToggleSave,
-  onNavigate,
-  onSelectSpeciesByName,
   showToast,
+  fieldPhotos = [],
+  onOpenPost,
 }) => {
   const isSaved = Boolean(hotspot.isSaved);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
   const mapHotspots = useMemo(() => [hotspot], [hotspot]);
   const directionsUrl = hotspotDirectionsUrl(hotspot);
-  const recentSightings = hotspot.source ? details?.recentSightings || [] : hotspot.recentSightings;
-  const speciesList = hotspot.source ? details?.speciesList || [] : hotspot.speciesList;
-  const selectSpecies = (id: string | undefined, name: string) => {
-    if (hotspot.source) {
-      if (id && onSelectSpeciesById) onSelectSpeciesById(id);
-      else showToast('This species is not available in the loaded catalogue.');
-    } else onSelectSpeciesByName(name);
+  const recentSightings = details?.recentSightings || [];
+  const speciesList = details?.speciesList || [];
+  const recentSpeciesCount = new Set(recentSightings.map((sight) => sight.speciesId || sight.species)).size;
+  const sunrise = weather?.days[0]?.sunrise?.slice(11, 16);
+  const selectSpecies = (id: string | undefined) => {
+    if (id && onSelectSpeciesById) onSelectSpeciesById(id);
+    else showToast('This bird is not in the current bird list.');
   };
 
   const toggleAccordion = (id: string) => {
@@ -79,7 +79,7 @@ export const HotspotDetailScreen: React.FC<HotspotDetailScreenProps> = ({
           <button
             onClick={handleToggleSave}
             disabled={saveDisabled}
-            aria-label="Bookmark this sanctuary"
+            aria-label="Save this hotspot"
             aria-pressed={isSaved}
             className="w-11 h-11 rounded-full bg-white/90 backdrop-blur-md shadow-sm flex items-center justify-center text-[#181c20] hover:bg-white active:scale-95 transition-all"
           >
@@ -101,10 +101,10 @@ export const HotspotDetailScreen: React.FC<HotspotDetailScreenProps> = ({
               <span className="material-symbols-outlined text-[14px] text-[#2d5a27]">
                 location_on
               </span>
-              {hotspot.region}
+              {regionName(hotspot.region)}
             </span>
             <span className="inline-flex items-center px-2 py-0.5 rounded bg-[#fe932c] text-white text-[11px] font-bold">
-              {hotspot.source ? 'eBird Hotspot' : 'Wetland Hotspot'}
+              eBird Hotspot
             </span>
           </div>
           <h2 className="text-[24px] font-bold text-white tracking-tight leading-none drop-shadow-sm">
@@ -120,29 +120,29 @@ export const HotspotDetailScreen: React.FC<HotspotDetailScreenProps> = ({
             <span className="material-symbols-outlined text-[20px] text-[#2d5a27] mb-0.5">
               flutter_dash
             </span>
-            <span className={`max-w-full break-words font-bold text-[#181c20] leading-tight ${hotspot.activeTodayCount == null ? 'text-[11px]' : 'text-[17px]'}`}>
-              {hotspot.activeTodayCount ?? 'Unavailable'}
+            <span className="max-w-full break-words font-bold text-[#181c20] leading-tight text-[17px]">
+              {details ? recentSpeciesCount : '—'}
             </span>
-            <span className="text-[10px] text-[#42493e] font-semibold mt-0.5">Active today</span>
+            <span title="Species reported here in the past 14 days" className="text-[10px] text-[#42493e] font-semibold mt-0.5">Seen recently</span>
           </div>
 
           <div className="flex flex-col items-center justify-center text-center p-2 rounded-lg bg-white shadow-xs">
             <span className="material-symbols-outlined text-[20px] text-[#904d00] mb-0.5">
               wb_twilight
             </span>
-            <span className={`max-w-full break-words font-bold text-[#181c20] leading-tight ${hotspot.source ? 'text-[11px]' : 'text-[17px]'}`}>{hotspot.source ? 'Unavailable' : '06:00'}</span>
-            <span className="text-[10px] text-[#42493e] font-semibold mt-0.5">{hotspot.source ? 'Peak time' : 'Peak (06–09h)'}</span>
+            <span className="max-w-full break-words font-bold text-[#181c20] leading-tight text-[17px]">{sunrise || '—'}</span>
+            <span className="text-[10px] text-[#42493e] font-semibold mt-0.5">Sunrise</span>
           </div>
 
           <div className="flex flex-col items-center justify-center text-center p-2 rounded-lg bg-white shadow-xs">
             <span className="material-symbols-outlined text-[20px] text-[#154212] mb-0.5">
               thermostat
             </span>
-            <span className={`max-w-full break-words font-bold text-[#181c20] leading-tight ${hotspot.source && weather?.current.temperatureC == null ? 'text-[11px]' : 'text-[17px]'}`}>
-              {hotspot.source ? (weather?.current.temperatureC == null ? 'Unavailable' : `${weather.current.temperatureC}°C`) : hotspot.temp}
+            <span className="max-w-full break-words font-bold text-[#181c20] leading-tight text-[17px]">
+              {weather?.current.temperatureC == null ? '—' : `${weather.current.temperatureC}°C`}
             </span>
             <span className="text-[10px] text-[#42493e] font-semibold mt-0.5 truncate w-full">
-              {hotspot.source ? weather?.current.condition || 'Forecast pending' : hotspot.weatherCondition}
+              {weather?.current.condition || (weatherError ? 'No forecast' : 'Weather')}
             </span>
           </div>
         </div>
@@ -199,28 +199,28 @@ export const HotspotDetailScreen: React.FC<HotspotDetailScreenProps> = ({
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#154212]"></span>
             <h3 className="text-[18px] font-medium text-[#181c20]">Recent Sightings</h3>
-            <InformationDisclosure className="reference-info-inline" label="Hotspot alerts and report information">
-      {hotspot.source&&onToggleSubscription&&<button type="button" aria-pressed={subscribed} onClick={onToggleSubscription} className="mx-4 my-2 min-h-11 rounded-xl bg-white text-[#154212] text-[13px] font-semibold">{subscribed?'Unsubscribe from hotspot alerts':'Subscribe to hotspot alerts'}</button>}
-          {hotspot.source && <p className="text-[12px] text-[#42493e]">Latest report per species at this hotspot, not total sightings or a complete history.</p>}
-          {details && <p className="text-[11px] text-[#42493e]">Retrieved {new Date(details.fetchedAt).toLocaleString()}{details.cached ? ' (cached)' : ''}. Observation times are local to the location.</p>}
-      </InformationDisclosure>
           </div>
-          <span title={hotspot.source ? 'This hotspot, past 14 days' : undefined} className="shrink-0 text-[11px] text-[#42493e] font-semibold">{hotspot.source ? 'Past 14 days' : 'Past 4 hours'}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="text-[11px] text-[#42493e] font-semibold">Past 14 days</span>
+            {onToggleSubscription && <button type="button" aria-pressed={subscribed} aria-label={subscribed ? 'Unsubscribe from hotspot alerts' : 'Subscribe to hotspot alerts'} title={subscribed ? 'Alerts on for this hotspot' : 'Get alerts for this hotspot'} onClick={onToggleSubscription} className={`w-11 h-11 -my-2 rounded-full flex items-center justify-center ${subscribed ? 'text-[#904d00]' : 'text-[#42493e]'} hover:bg-[#ebeef3]`}>
+              <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: subscribed ? "'FILL' 1" : "'FILL' 0" }}>{subscribed ? 'notifications_active' : 'notifications'}</span>
+            </button>}
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 max-h-48 overflow-y-auto" tabIndex={0} role="region" aria-label="Recent hotspot reports">
 
-          {hotspot.source && !details && !detailsError && <p role="status" className="text-[12px] text-[#42493e]">Loading hotspot reports and species...</p>}
-          {hotspot.source && detailsError && <div role="alert" className="text-[12px] text-[#42493e]"><p>{detailsError}</p><button type="button" onClick={onRetryDetails} className="mt-2 font-semibold text-[#154212] underline">Try again</button></div>}
+          {!details && !detailsError && <p role="status" className="text-[12px] text-[#42493e]">Loading hotspot reports…</p>}
+          {detailsError && <div role="alert" className="text-[12px] text-[#42493e]"><p>{detailsError}</p><button type="button" onClick={onRetryDetails} className="mt-2 font-semibold text-[#154212] underline">Try again</button></div>}
 
-          {details && recentSightings.length === 0 && <p className="text-[12px] text-[#42493e]">No recent reports returned. This does not mean no birds occur here.</p>}
+          {details && recentSightings.length === 0 && <p className="text-[12px] text-[#42493e]">No reports here in the past 14 days.</p>}
           {recentSightings.map((sight, idx) => (
             <div
               key={idx}
               role="button"
               tabIndex={0}
-              onClick={() => selectSpecies(sight.speciesId, sight.species)}
-              onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectSpecies(sight.speciesId, sight.species); } }}
+              onClick={() => selectSpecies(sight.speciesId)}
+              onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectSpecies(sight.speciesId); } }}
               className="flex items-center justify-between p-2 bg-white rounded-lg shadow-xs hover:shadow-sm transition-all cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
@@ -240,72 +240,41 @@ export const HotspotDetailScreen: React.FC<HotspotDetailScreenProps> = ({
               </div>
 
               <div className="flex flex-col items-end flex-shrink-0 pl-2">
-                <span className="px-2 py-0.5 rounded-full bg-[#f1f4f9] text-[#154212] text-[10px] font-bold">
-                  {hotspot.source ? sight.count === null ? 'Count unavailable' : `${sight.count} individuals` : `${sight.count} sightings`}
-                </span>
-                <span className="text-[10px] text-[#42493e] mt-1">{sight.timeAgo}</span>
+                {sight.count !== null && <span className="px-2 py-0.5 rounded-full bg-[#f1f4f9] text-[#154212] text-[10px] font-bold">
+                  {sight.count} {sight.count === 1 ? 'bird' : 'birds'}
+                </span>}
+                <span className="text-[10px] text-[#42493e] mt-1">{fieldTime(sight.timeAgo)}</span>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Section 2: Recent Photographs Strip */}
-      <div className="pt-5">
+      {/* Section 2: Recent photographs shared from this hotspot */}
+      {fieldPhotos.length > 0 && <div className="pt-5">
         <div className="px-4 flex items-center justify-between mb-2">
           <h3 className="text-[17px] min-[360px]:text-[18px] font-medium text-[#181c20]">Recent Field Photographs</h3>
           <span className="text-[11px] text-[#42493e] font-semibold">Local birders</span>
         </div>
 
         <div className="flex gap-2.5 px-4 overflow-x-auto no-scrollbar pb-1">
-          {hotspot.photos.map((item, i) => (
-            <div
-              key={i}
-              className="relative flex-shrink-0 w-32 h-40 rounded-xl overflow-hidden shadow-xs bg-[#ebeef3]"
+          {fieldPhotos.slice(0, 12).map((post) => (
+            <button
+              type="button"
+              key={post.id}
+              onClick={() => onOpenPost?.(post.id)}
+              aria-label={`Open ${post.speciesName} by ${post.authorName}`}
+              className="relative flex-shrink-0 w-32 h-40 rounded-xl overflow-hidden shadow-xs bg-[#ebeef3] text-left"
             >
-              <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+              <img src={post.imageUrl} alt="" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2">
-                <span className="text-[11px] font-bold text-white truncate">{item.title}</span>
-                <span className="text-[10px] text-white/80 truncate">{item.author}</span>
+                <span className="text-[11px] font-bold text-white truncate">{post.speciesName}</span>
+                <span className="text-[10px] text-white/80 truncate">{post.authorName}</span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
-      </div>
-
-      {/* Section 3: Field Notes & Gear */}
-      <div className="px-4 pt-5">
-        <div className="p-4 bg-[#f1f4f9] rounded-2xl shadow-xs space-y-3">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="material-symbols-outlined text-[20px] text-[#2d5a27]">hiking</span>
-            <h3 className="text-[18px] font-medium text-[#181c20]">Field Notes & Gear</h3>
-          </div>
-
-          <div className="flex items-start gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#e0e3e8] flex items-center justify-center flex-shrink-0 mt-0.5 text-[#181c20]">
-              <span className="material-symbols-outlined text-[18px]">terrain</span>
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-[12px] font-bold text-[#181c20]">Trail Difficulty</span>
-              <span className="text-[12px] text-[#42493e] leading-snug">
-                {hotspot.trailDifficulty}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#e0e3e8] flex items-center justify-center flex-shrink-0 mt-0.5 text-[#181c20]">
-              <span className="material-symbols-outlined text-[18px]">camera</span>
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-[12px] font-bold text-[#181c20]">Recommended Optics & Gear</span>
-              <span className="text-[12px] text-[#42493e] leading-snug">
-                {hotspot.recommendedGear}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+      </div>}
 
       {/* Expandable Accordions */}
       <div className="px-4 pt-5 space-y-2.5">
@@ -334,23 +303,7 @@ export const HotspotDetailScreen: React.FC<HotspotDetailScreenProps> = ({
 
           {openAccordion === 'visit' && (
             <div className="px-3.5 pb-3.5 pt-1 space-y-2">
-              {hotspot.source ? <HotspotAccess access={hotspot.access} /> : <div className="p-3 rounded-xl bg-[#f1f4f9] text-[#181c20] text-[13px] space-y-1.5">
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="text-[#42493e]">Gates Opening Hours</span>
-                  <span className="font-bold text-[#154212]">{hotspot.openingHours}</span>
-                </div>
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="text-[#42493e]">Entry Fee</span>
-                  <span className="font-semibold">{hotspot.entryFee}</span>
-                </div>
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="text-[#42493e]">Still Camera Pass</span>
-                  <span className="font-semibold">{hotspot.cameraPass}</span>
-                </div>
-                <p className="mt-2 text-[#42493e] text-[11px] leading-relaxed pt-1 border-t border-[#e0e3e8]">
-                  {hotspot.transitTip}
-                </p>
-              </div>}
+              <HotspotAccess access={hotspot.access} />
             </div>
           )}
         </div>
@@ -380,28 +333,7 @@ export const HotspotDetailScreen: React.FC<HotspotDetailScreenProps> = ({
 
           {openAccordion === 'weather' && (
             <div className="px-3.5 pb-3.5 pt-1 space-y-2">
-              {hotspot.source ? <HotspotWeatherPanel weather={weather} error={weatherError} onRetry={onRetryWeather} /> : <>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="p-2.5 rounded-xl bg-[#f1f4f9] flex flex-col">
-                  <span className="text-[10px] text-[#42493e] font-semibold">Wind Speed</span>
-                  <span className="text-[14px] font-bold text-[#181c20]">{hotspot.wind}</span>
-                  <span className="text-[11px] text-[#154212] font-medium">
-                    {hotspot.source ? 'Guidance not connected' : 'Ideal for perched birds'}
-                  </span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-[#f1f4f9] flex flex-col">
-                  <span className="text-[10px] text-[#42493e] font-semibold">Humidity & Mist</span>
-                  <span className="text-[14px] font-bold text-[#181c20]">{hotspot.source ? 'Unavailable' : '68% • Clearing'}</span>
-                  <span className="text-[11px] text-[#42493e]">{hotspot.source ? 'Weather not connected' : 'Mist burns by 07:15'}</span>
-                </div>
-              </div>
-              <div className="p-2.5 rounded-xl bg-[#f1f4f9] flex items-center gap-2 text-[12px] text-[#181c20]">
-                <span className="material-symbols-outlined text-[18px] text-[#904d00]">
-                  light_mode
-                </span>
-                <span>{hotspot.source ? 'Sunrise and golden hour not connected' : 'Sunrise: 06:14 • Golden hour ends 07:45'}</span>
-              </div>
-              </>}
+              <HotspotWeatherPanel weather={weather} error={weatherError} onRetry={onRetryWeather} />
             </div>
           )}
         </div>
@@ -419,7 +351,7 @@ export const HotspotDetailScreen: React.FC<HotspotDetailScreenProps> = ({
                 </span>
               </div>
               <span className="text-[15px] font-bold text-[#181c20]">
-                {hotspot.source ? `Species recorded all time (${hotspot.speciesCount ?? 'Unknown'})` : `View All Hotspot Species (${hotspot.speciesCount || 188})`}
+                {hotspot.speciesCount == null ? 'Species recorded all time' : `Species recorded all time (${hotspot.speciesCount})`}
               </span>
             </div>
             <span
@@ -433,15 +365,16 @@ export const HotspotDetailScreen: React.FC<HotspotDetailScreenProps> = ({
 
           {openAccordion === 'species' && (
             <div className="px-3.5 pb-3.5 pt-1 space-y-1.5">
-              {hotspot.source && <p className="text-[12px] text-[#42493e]">All-time recorded species, distinct from recent activity. {details ? `${speciesList.length} catalogue species matched; ${details.unmatchedTaxa} other taxa could not be matched.` : detailsError ? 'Species list unavailable; retry above.' : 'Loading species list...'}</p>}
-              {details && speciesList.length === 0 && <p className="text-[12px] text-[#42493e]">No catalogue species matched this list.</p>}
+              {!details && <p className="text-[12px] text-[#42493e]">{detailsError ? 'The species list could not load. Use Try again above.' : 'Loading species list…'}</p>}
+              {details && details.unmatchedTaxa > 0 && speciesList.length > 0 && <p className="text-[12px] text-[#42493e]">{details.unmatchedTaxa} other {details.unmatchedTaxa === 1 ? 'entry' : 'entries'} (such as hybrids) {details.unmatchedTaxa === 1 ? 'is' : 'are'} not listed.</p>}
+              {details && speciesList.length === 0 && <p className="text-[12px] text-[#42493e]">No species listed for this hotspot yet.</p>}
               {speciesList.map((sp, i) => (
                 <div
                   key={i}
                   role="button"
                   tabIndex={0}
-                  onClick={() => selectSpecies(sp.speciesId, sp.name)}
-                  onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectSpecies(sp.speciesId, sp.name); } }}
+                  onClick={() => selectSpecies(sp.speciesId)}
+                  onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectSpecies(sp.speciesId); } }}
                   className="flex items-center justify-between py-2 px-2.5 rounded-lg hover:bg-[#f1f4f9] cursor-pointer transition-colors"
                 >
                   <div>
@@ -458,36 +391,13 @@ export const HotspotDetailScreen: React.FC<HotspotDetailScreenProps> = ({
         </div>
       </div>
 
-      {!hotspot.source && <>
-      {/* Sanctuary Map & Access */}
-      <div className="px-4 pt-5">
-        <div className="p-3.5 bg-white rounded-2xl shadow-xs border border-[#f1f4f9]">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[15px] font-bold text-[#181c20]">Sanctuary Map & Access</span>
-            <span className="text-[11px] font-mono text-[#42493e]">{hotspot.coordinates}</span>
-          </div>
-          <div className="w-full h-40 rounded-xl bg-[#ebeef3] bg-cover bg-center flex items-center justify-center relative overflow-hidden">
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLleV9fLCzYR8V5eZzMFUDF_DDa2p5Y4odVcNeDwXKD8Jn1Zg7s4Vn4hDJwnQ-OzZwVv3J76aTJ7_63xFKt7ORzxtN8oLXe5DGtpoEmz4U71YDB7c45F0H3DH1zledFONKorO_59-M-7oQmS9ZDE19054qz1E0ZymqcqGNKUgLeitM3Ce1mE-F6e0-0CabFEAGpW8ojqwBIANkj1bl5sh33esmFDjY7fw4tEm5b2XkY-R-KZ6IbQr4zg"
-              alt="Barrage Point"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/20"></div>
-            <div className="relative z-10 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-sm shadow-md flex items-center gap-1.5 text-[#181c20]">
-              <span className="material-symbols-outlined text-[16px] text-[#2d5a27]">near_me</span>
-              <span className="text-[12px] font-bold">Barrage Watchtower Point</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      </>}
-      {hotspot.source && <div className="mx-4 mt-4 rounded-xl bg-white p-4 text-[13px] text-[#42493e]">
+      <div className="mx-4 mt-4 rounded-xl bg-white p-4 text-[13px] text-[#42493e]">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><h3 className="text-[18px] font-medium text-[#181c20]">Sanctuary Map &amp; Access</h3><span className="text-[11px] font-mono">{hotspot.coordinates}</span></div>
         <HotspotMap hotspots={mapHotspots} label={`Map of ${hotspot.name}`} selectedId={hotspot.id} />
         {directionsUrl ? <a href={directionsUrl} target="_blank" rel="noreferrer" className="mt-3 flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2d5a27] font-semibold text-white"><span className="material-symbols-outlined text-[18px]">directions</span>Open directions</a> : <p role="status" className="mt-2">Directions unavailable: this hotspot has no valid coordinates.</p>}
-        <p className="mt-2 text-[11px]">Directions open Google Maps at the hotspot coordinates. Entry-gate information remains unavailable.</p>
+        <p className="mt-2 text-[11px]">Directions lead to the hotspot marker, which may not be the entrance.</p>
         <a href={hotspot.sourceUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block font-semibold text-[#154212] underline">View hotspot on eBird</a>
-      </div>}
+      </div>
     </div>
   );
 };

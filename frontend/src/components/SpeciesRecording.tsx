@@ -40,14 +40,12 @@ export const SpeciesRecording: React.FC<{ speciesId?: string; onSessionExpired?:
   }} className="mt-3.5 scroll-mt-20 rounded-xl bg-[#f1f4f9] p-3 text-[13px] leading-relaxed text-[#42493e] break-words">
     <summary className="cursor-pointer font-semibold text-[#181c20]">Recorded calls</summary>
     <div className="mt-3 space-y-3">
-      <p>Reference listening only. Avoid playback near wild birds; it can disturb them. A linked recording is not a guarantee of field identification.</p>
-      {!speciesId ? <p>Recordings require an external catalogue species.</p> : error ? <div role="alert"><p>{error}</p><button type="button" onClick={() => setAttempt((value) => value + 1)} className="min-h-11 font-semibold underline">Retry recording</button></div>
-        : !data ? <p role="status">Loading sourced recording...</p> : !recording ? <p>No supported licensed recording is linked to this exact species.</p> : <>
+      <p>Avoid playback near wild birds; it can disturb them.</p>
+      {!speciesId ? null : error ? <div role="alert"><p>{error}</p><button type="button" onClick={() => setAttempt((value) => value + 1)} className="min-h-11 font-semibold underline">Retry recording</button></div>
+        : !data ? <p role="status">Loading recording…</p> : !recording ? <p>No freely licensed recording is available for this bird yet.</p> : <>
           <audio key={`${speciesId}-${attempt}`} ref={audio} controls preload="none" src={recording.audioUrl} className="w-full max-w-full" aria-label="Species reference recording" onError={() => setPlaybackError(true)} />
-          {playbackError && <div role="alert"><p>This recording could not be played. Your browser may not support its format, or the media provider may be unavailable.</p><button type="button" onClick={() => { setPlaybackError(false); audio.current?.load(); }} className="min-h-11 underline">Retry playback</button></div>}
-          <p>{recording.title} — {recording.author}. {recording.credit} {recording.attribution} {recording.restrictions}</p>
-          <p><a href={recording.sourceUrl} target="_blank" rel="noreferrer" className="underline">Commons source</a> • <a href={recording.licenseUrl} target="_blank" rel="noreferrer" className="underline">{recording.license}</a> • <a href={recording.matchUrl} target="_blank" rel="noreferrer" className="underline">Exact-species link</a></p>
-          <p className="text-[11px]">Retrieved {data.fetchedAt} (UTC){data.cached ? ' • cached' : ''}. Audio streams from Wikimedia when you play it. No simulated waveform or estimated call length is shown.</p>
+          {playbackError && <div role="alert"><p>This recording could not be played on this device.</p><button type="button" onClick={() => { setPlaybackError(false); audio.current?.load(); }} className="min-h-11 underline">Retry playback</button></div>}
+          <p className="text-[11px]">Recording: {recording.author} • <a href={recording.licenseUrl} target="_blank" rel="noreferrer" className="underline">{recording.license}</a> • <a href={recording.sourceUrl} target="_blank" rel="noreferrer" className="underline">Wikimedia Commons</a>{[recording.credit, recording.attribution, recording.restrictions].filter(Boolean).map((line) => ` • ${line}`).join('')}</p>
         </>}
     </div>
   </details>;

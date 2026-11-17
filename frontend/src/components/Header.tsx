@@ -1,7 +1,6 @@
 import React from 'react';
 import { ScreenType, UserProfile } from '../types';
 import { readRoute, routeQuery, shareAppLink } from '../lib/navigation';
-import { InformationDisclosure } from './InformationDisclosure';
 
 interface HeaderProps {
   currentScreen: ScreenType;
@@ -11,18 +10,16 @@ interface HeaderProps {
   titleOverride?: string;
   userProfile: UserProfile;
   showToast: (message: string) => void;
-  information?: React.ReactNode;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   currentScreen,
   onNavigate,
   onBack,
-  unreadCount = 3,
+  unreadCount = 0,
   titleOverride,
   userProfile,
   showToast,
-  information,
 }) => {
   const isStackScreen = [
     'species-detail',
@@ -108,14 +105,13 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {information && <InformationDisclosure label="Discovery data and sources">{information}</InformationDisclosure>}
           {isStackScreen ? (
             <button
               onClick={() => {
                 try { void shareAppLink(`${window.location.origin}${window.location.pathname}${routeQuery(readRoute(window.location.search))}`,showToast); }
                 catch { showToast('Open a valid destination before sharing this link.'); }
               }}
-              aria-label="Share observation"
+              aria-label="Share this page"
               className="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl text-[#42493e] hover:text-[#181c20] hover:bg-[#ebeef3] transition-colors"
             >
               <span className="material-symbols-outlined text-[20px]">share</span>

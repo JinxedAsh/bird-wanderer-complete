@@ -4,11 +4,11 @@ Phase 1 increment, 4 October 2026. This extends the existing guide; it does not 
 
 ## What a teammate can see
 
-On a real species page, **Best Time** stays Unverified. Its new link and **Plan a Shot** focus the existing Field Guide & Technique card. Two disclosures add seasonal context and preparation for a chosen kind of shot. Existing photos, credits, EXIF, location links and hotspot forecasts remain available.
+On a real species page, **Best Time** shows “Varies by site” rather than a claimed time. Its new link and **Plan a Shot** focus the existing Field Guide & Technique card. Two disclosures add seasonal context and preparation for a chosen kind of shot. Existing photos, credits, EXIF, location links and hotspot forecasts remain available.
 
-**Check regional seasonal patterns** opens the configured region's eBird bar chart and tells the user which species to find. The link is regional, not a guaranteed species-filtered chart. The chart's date/location controls matter. The app explains checklist frequency and distinguishes historical reporting from current 14-day reports. It neither downloads seasonal values nor computes a best month. Delhi's page was independently opened in Test chat without sign-in; browser bot checks/provider availability may vary.
+**When is it seen here?** opens the configured region's eBird bar chart and tells the user which species to find. The link is regional, not a guaranteed species-filtered chart. The chart's date/location controls matter. The app explains checklist frequency and distinguishes historical reporting from current 14-day reports. It neither downloads seasonal values nor computes a best month. Delhi's page was independently opened in the tester without sign-in; browser bot checks/provider availability may vary.
 
-**Prepare for subject motion** offers perched/mostly stationary versus flight/fast movement. Guidance changes for the selected shot. This is labelled general technique, not a measured species difficulty rating. A shutter selector compares five test speeds with the current reference exposure and ISO. There is no proposed target until the user chooses one.
+**Perched or in flight?** offers perched/mostly stationary versus flight/fast movement. Guidance changes for the selected shot. This is labelled general technique, not a measured species difficulty rating. A shutter selector compares five test speeds with the current reference exposure and ISO. There is no proposed target until the user chooses one.
 
 ## The exposure calculation
 

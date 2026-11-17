@@ -11,9 +11,8 @@ import { observations, observationEntry, observationPost, type PublicBirder } fr
 import { alerts, type AlertSubscription } from './lib/alerts';
 import { activity, type DiscoveryActivity, type SaveKind } from './lib/activity';
 import { distanceKm, nearbyRadiusKm, type LocationPoint } from './lib/location';
-import { loadLocationWeather } from './lib/discovery';
 import { LocationPicker } from './components/LocationPicker';
-import { loadDiscovery, loadSpeciesLocations, loadHotspotDetails, loadHotspotWeather, type DiscoveryCatalogue, type SpeciesLocations, type HotspotDetails, type HotspotWeather } from './lib/discovery';
+import { loadDiscovery, loadLocationWeather, regionName, loadSpeciesLocations, loadHotspotDetails, loadHotspotWeather, type DiscoveryCatalogue, type SpeciesLocations, type HotspotDetails, type HotspotWeather } from './lib/discovery';
 import {
   ScreenType,
   BirdSpecies,
@@ -23,11 +22,7 @@ import {
   AppNotification,
   UserProfile,
 } from './types';
-import {
-  INITIAL_USER_PROFILE,
-  SPECIES_DATABASE,
-  HOTSPOTS_DATA,
-} from './data/mockData';
+import { EMPTY_PROFILE, EMPTY_SPECIES, EMPTY_HOTSPOT } from './lib/defaults';
 
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
@@ -56,9 +51,7 @@ export default function App() {
   const [routeError, setRouteError] = useState('');
 
   // Data states
-  const [userProfile, setUserProfile] = useState<UserProfile>(INITIAL_USER_PROFILE);
-  const [speciesList, setSpeciesList] = useState<BirdSpecies[]>(SPECIES_DATABASE);
-  const [hotspotsList, setHotspotsList] = useState<Hotspot[]>(HOTSPOTS_DATA);
+  const [userProfile, setUserProfile] = useState<UserProfile>(EMPTY_PROFILE);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [birders,setBirders] = useState<PublicBirder[]>([]);
@@ -90,11 +83,9 @@ export default function App() {
     return()=>window.removeEventListener('bird-session-changed',changed);
   },[]);
   const [opportunitiesEnabled,setOpportunitiesEnabled]=useState(false);
-  const [opportunityChecks,setOpportunityChecks]=useState<Array<{id:string;checkedAt:number;status:'ok'|'unavailable'}>>([]);
   const [deviceRegistered, setDeviceRegistered] = useState(false);
   const [pushConfigured, setPushConfigured] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
-  const [pushStatus, setPushStatus] = useState('Firebase push is not configured.');
   const alertsController = useRef<AbortController | null>(null);
   const alertMutation = useRef(false);
   useEffect(() => {
@@ -111,8 +102,7 @@ export default function App() {
         if (!controller.signal.aborted && recordsOwner.current === owner) {
           setSubscriptions(state.subscriptions);
           setNotifications(state.notifications);
-          setOpportunitiesEnabled(state.opportunity?.enabled||false);setOpportunityChecks(state.opportunity?.checks||[]);
-          setPushStatus(state.push.message);
+          setOpportunitiesEnabled(state.opportunity?.enabled||false);
           setDeviceRegistered(state.push.deviceRegistered || false);
           setPushConfigured(state.push.configured);
           setAlertsError('');
@@ -259,12 +249,10 @@ export default function App() {
     setDiscoveryActivity({ saves: [], searches: [] });
     setActivityError('');
     setSessionUser(user);
-    setUserProfile({ ...INITIAL_USER_PROFILE, name: user.name, handle: '',bio:'',primaryRig:'',location:'',title:'Birder',avatarUrl:'/bird-wanderer-logo.svg',birdsCount:0,photosCount:0,tripsCount:0 });
+    setUserProfile({ ...EMPTY_PROFILE, name: user.name });
     setPosts([]);
     setJournalEntries([]);
-    setNotifications([]);setSubscriptions([]);setAlertsError('');setAlertPost(null);setDeviceRegistered(false);setPushConfigured(false);setPushBusy(false);setOpportunitiesEnabled(false);setOpportunityChecks([]);
-    setSpeciesList(SPECIES_DATABASE);
-    setHotspotsList(HOTSPOTS_DATA);
+    setNotifications([]);setSubscriptions([]);setAlertsError('');setAlertPost(null);setDeviceRegistered(false);setPushConfigured(false);setPushBusy(false);setOpportunitiesEnabled(false);
     setCurrentScreen('explore');
     requestCurrentRoute();
   };
@@ -307,8 +295,8 @@ export default function App() {
   }, [sessionUser?.id]);
 
   // Selected item states
-  const [selectedSpecies, setSelectedSpecies] = useState<BirdSpecies>(SPECIES_DATABASE[1]); // Common Kingfisher by default
-  const [selectedHotspot, setSelectedHotspot] = useState<Hotspot>(HOTSPOTS_DATA[1]); // Okhla Sanctuary
+  const [selectedSpecies, setSelectedSpecies] = useState<BirdSpecies>(EMPTY_SPECIES);
+  const [selectedHotspot, setSelectedHotspot] = useState<Hotspot>(EMPTY_HOTSPOT);
   const [speciesLocations, setSpeciesLocations] = useState<{ id: string; data?: SpeciesLocations; error?: string }>({ id: '' });
   const [hotspotDetails, setHotspotDetails] = useState<{ id: string; data?: HotspotDetails; error?: string }>({ id: '' });
   const [hotspotWeather, setHotspotWeather] = useState<{ id: string; data?: HotspotWeather; error?: string }>({ id: '' });
@@ -396,11 +384,11 @@ export default function App() {
     if(!sessionUser||!pendingRoute)return;
     const route=pendingRoute,controller=new AbortController();
     if(route.species||route.hotspot){
-      if(!discovery){setRouteError(discoveryError?'This link needs the discovery catalogue. Retry discovery to open it.':'');return;}
+      if(!discovery){setRouteError(discoveryError?'This link needs the bird list, which has not loaded yet. Try again to open it.':'');return;}
       const bird=route.species?discovery.species.find(row=>row.id===route.species):undefined;
       const site=route.hotspot?discovery.hotspots.find(row=>row.id===route.hotspot):undefined;
       if((route.species&&!bird)||(route.hotspot&&!site)){
-        setPendingRoute(null);setCurrentScreen('explore');setRouteError('This destination is not available in the configured discovery region.');return;
+        setPendingRoute(null);setCurrentScreen('explore');setRouteError('This link points to a bird or hotspot outside the area this app covers.');return;
       }
       if(bird)setSelectedSpecies(bird);
       if(site)setSelectedHotspot(site);
@@ -453,22 +441,22 @@ export default function App() {
   };
 
   const handleSelectSpeciesByName = (name: string) => {
-    const found = discovery?.species.find((s) => s.name.toLowerCase() === name.toLowerCase()) || speciesList.find((s) => s.name.toLowerCase().includes(name.toLowerCase()));
+    const found = discovery?.species.find((s) => s.name.toLowerCase() === name.toLowerCase());
     if (found) {
       setSelectedSpecies(found);
       navigateTo('species-detail', { species: found });
     } else {
-      showToast('This species is not available in the sample catalogue yet.');
+      showToast('This bird is not in the current bird list.');
     }
   };
 
   const handleSelectSpeciesById = (speciesId: string) => {
-    const found = discovery?.species.find((s) => s.id === speciesId) || speciesList.find((s) => s.id === speciesId);
+    const found = discovery?.species.find((s) => s.id === speciesId);
     if (found) {
       setSelectedSpecies(found);
       navigateTo('species-detail', { species: found });
     } else {
-      showToast('This species is not available in the loaded catalogue.');
+      showToast('This bird is not in the current bird list.');
     }
   };
 
@@ -480,7 +468,7 @@ export default function App() {
   const handleSelectHotspotById = (id: string) => {
     const hotspot = discovery?.hotspots.find((h) => h.id === id);
     if (hotspot) handleSelectHotspot(hotspot);
-    else showToast('This hotspot is not available in the loaded region.');
+    else showToast('This hotspot is outside the area this app covers.');
   };
 
   const handleQuickLog = (species: BirdSpecies) => {
@@ -499,17 +487,8 @@ export default function App() {
   };
 
   const handleToggleSaveHotspot = (hotspotId: string) => {
-    const hotspot = discovery?.hotspots.find((h) => h.id === hotspotId) || hotspotsList.find((h) => h.id === hotspotId);
-    if (!hotspot) return;
-    if (hotspot.source) {
-      handleToggleDiscoverySave('hotspot', hotspot.id, hotspot.name);
-      return;
-    }
-    setDiscovery((prev) => prev ? { ...prev, hotspots: prev.hotspots.map((h) => h.id === hotspotId ? { ...h, isSaved: !h.isSaved } : h) } : prev);
-    setHotspotsList((prev) => prev.map((h) =>
-      h.id === hotspotId ? { ...h, isSaved: !h.isSaved } : h
-    ));
-    showToast(hotspot.isSaved ? 'Removed from bookmarks' : `Saved ${hotspot.name} to field bookmarks`);
+    const hotspot = discovery?.hotspots.find((h) => h.id === hotspotId);
+    if (hotspot) handleToggleDiscoverySave('hotspot', hotspot.id, hotspot.name);
   };
 
   const isDiscoverySaved = (kind: SaveKind, id: string) => discoveryActivity.saves.some((item) => item.kind === kind && item.id === id);
@@ -663,12 +642,10 @@ export default function App() {
     setPersonTarget(null);
     setSessionUser(null);
     setSessionError('');
-    setUserProfile(INITIAL_USER_PROFILE);
+    setUserProfile(EMPTY_PROFILE);
     setPosts([]);
     setJournalEntries([]);
-    setNotifications([]);setSubscriptions([]);setAlertsError('');setAlertPost(null);setDeviceRegistered(false);setPushConfigured(false);setPushBusy(false);setOpportunitiesEnabled(false);setOpportunityChecks([]);
-    setSpeciesList(SPECIES_DATABASE);
-    setHotspotsList(HOTSPOTS_DATA);
+    setNotifications([]);setSubscriptions([]);setAlertsError('');setAlertPost(null);setDeviceRegistered(false);setPushConfigured(false);setPushBusy(false);setOpportunitiesEnabled(false);
     setDiscovery(null);
     setDiscoveryError('');
     setSpeciesLocations({ id: '' });
@@ -702,8 +679,6 @@ export default function App() {
     </main>
   );
 
-  const discoveryInformation = discovery && !discoveryError ? <p>eBird - {discovery.coverageLabel || discovery.region}. Retrieved {new Date(discovery.fetchedAt).toLocaleString()}. Recent reports: past 14 days. {discovery.cached ? 'Using server cache.' : ''}</p> : undefined;
-
   return (
     <div className="min-h-full bg-[#f7f9ff] text-[#181c20] flex flex-col items-center">
       {/* Mobile Frame Container */}
@@ -717,7 +692,6 @@ export default function App() {
             unreadCount={unreadNotifsCount}
             userProfile={userProfile}
             showToast={showToast}
-            information={['explore','hotspots'].includes(currentScreen) ? discoveryInformation : undefined}
           />
         )}
 
@@ -738,12 +712,12 @@ export default function App() {
             </div>
           )}
           {sessionUser && (recordsLoading || recordsError) && <div role={recordsError?'alert':'status'} className="mx-4 mt-2 rounded-xl bg-[#f1f4f9] p-3 text-[12px] text-[#42493e]">{recordsError||'Loading your field records…'}{recordsError&&<button type="button" onClick={()=>setRecordsAttempt(value=>value+1)} className="min-h-11 ml-2 underline">Retry field records</button>}</div>}
-          {['journal','life-list','profile'].includes(currentScreen)&&userProfile.photosCount>journalEntries.length&&<p className="mx-4 text-xs text-[#42493e]">Showing {journalEntries.length} of {userProfile.photosCount} field records. Totals cover all records; load older pages to include their details/species.</p>}
+          {['journal','life-list','profile'].includes(currentScreen)&&userProfile.photosCount>journalEntries.length&&<p className="mx-4 text-xs text-[#42493e]">Showing {journalEntries.length} of {userProfile.photosCount} field records.</p>}
           {['journal','life-list','profile'].includes(currentScreen)&&ownNext!==null&&<button disabled={recordsLoading} onClick={()=>setOwnPages(n=>n+1)} className="mx-4 min-h-11 underline">Load older field records</button>}
           {currentScreen==='community'&&<div className="mx-4 flex gap-4">{feedNext!==null&&<button disabled={recordsLoading} onClick={()=>setFeedPages(n=>n+1)} className="min-h-11 underline">Load older community posts</button>}{peopleNext!==null&&<button disabled={recordsLoading} onClick={()=>setPeoplePages(n=>n+1)} className="min-h-11 underline">Load more birders</button>}</div>}
           {['explore', 'search', 'hotspots'].includes(currentScreen) && (discoveryLoading || discoveryError || !discovery) && (
             <div role="status" className="mx-4 mt-2 rounded-xl bg-[#f1f4f9] p-3 text-[12px] text-[#42493e]">
-              {discoveryLoading ? 'Loading birds and hotspots from eBird...' : discoveryError || (discovery ? `eBird - ${discovery.coverageLabel || discovery.region}. Retrieved ${new Date(discovery.fetchedAt).toLocaleString()}. Recent reports: past 14 days. ${discovery.cached ? 'Using server cache.' : ''}` : 'External discovery has not loaded.')}
+              {discoveryLoading ? 'Loading birds and hotspots…' : discoveryError || 'Birds and hotspots have not loaded yet.'}
               {discoveryError && <button type="button" className="ml-2 font-semibold text-[#154212] underline" onClick={() => setDiscoveryAttempt((prev) => prev + 1)}>Try again</button>}
             </div>
           )}
@@ -764,8 +738,8 @@ export default function App() {
               onSessionExpired={resetSession}
               observerName={userProfile.name}
               speciesList={exploreSpecies}
-              externalDiscovery
-              discoveryRegion={discovery?.coverageLabel || discovery?.region}
+              discoveryRegion={regionName(discovery?.coverageLabel || discovery?.region)}
+              hotspotCount={location ? nearbyIds.size : externalHotspots.length}
               onSelectSpecies={handleSelectSpecies}
               onNavigate={navigateTo}
               onQuickLog={handleQuickLog}
@@ -807,7 +781,6 @@ export default function App() {
               nearbyEnabled={Boolean(location)}
               onChooseLocation={() => setLocationPickerOpen(true)}
               hotspots={externalHotspots}
-              externalDiscovery
               onSelectHotspot={handleSelectHotspot}
               onNavigate={navigateTo}
               showToast={showToast}
@@ -839,12 +812,12 @@ export default function App() {
             <SpeciesDetailScreen
               subscribed={isSubscribed('species',selectedSpecies.id)}
               onToggleSubscription={()=>void toggleSubscription('species',selectedSpecies.id)}
-              saved={selectedSpecies.source ? isDiscoverySaved('species', selectedSpecies.id) : undefined}
-              saveDisabled={Boolean(selectedSpecies.source) && saveDisabled}
-              onToggleBookmark={selectedSpecies.source ? () => handleToggleDiscoverySave('species', selectedSpecies.id, selectedSpecies.name) : undefined}
+              saved={isDiscoverySaved('species', selectedSpecies.id)}
+              saveDisabled={saveDisabled}
+              onToggleBookmark={() => handleToggleDiscoverySave('species', selectedSpecies.id, selectedSpecies.name)}
               onSessionExpired={resetSession}
               key={selectedSpecies.id}
-              species={speciesList.find((s) => s.id === selectedSpecies.id) || selectedSpecies}
+              species={selectedSpecies}
               onNavigate={navigateTo}
               onQuickLog={handleQuickLog}
               showToast={showToast}
@@ -874,12 +847,13 @@ export default function App() {
             <HotspotDetailScreen
               subscribed={isSubscribed('hotspot',selectedHotspot.id)}
               onToggleSubscription={()=>void toggleSubscription('hotspot',selectedHotspot.id)}
-              saveDisabled={Boolean(selectedHotspot.source) && saveDisabled}
+              saveDisabled={saveDisabled}
               key={selectedHotspot.id}
-              hotspot={externalHotspots.find((h) => h.id === selectedHotspot.id) || hotspotsList.find((h) => h.id === selectedHotspot.id) || { ...selectedHotspot, isSaved: selectedHotspot.source ? isDiscoverySaved('hotspot', selectedHotspot.id) : selectedHotspot.isSaved }}
+              hotspot={externalHotspots.find((h) => h.id === selectedHotspot.id) || { ...selectedHotspot, isSaved: isDiscoverySaved('hotspot', selectedHotspot.id) }}
+              fieldPhotos={posts.filter((post) => post.hotspotId === selectedHotspot.id)}
+              onOpenPost={handleOpenObservation}
               onToggleSave={handleToggleSaveHotspot}
               onNavigate={navigateTo}
-              onSelectSpeciesByName={handleSelectSpeciesByName}
               showToast={showToast}
               details={hotspotDetails.id === selectedHotspot.id ? hotspotDetails.data : undefined}
               detailsError={hotspotDetails.id === selectedHotspot.id ? hotspotDetails.error : undefined}
@@ -908,17 +882,15 @@ export default function App() {
           )}
 
           {currentScreen === 'search' && (
-            <GlobalSearchScreen sourceInformation={discoveryInformation} key={sessionUser?.id} onOpenPerson={handleOpenPerson} onOpenPost={handleOpenObservation}
+            <GlobalSearchScreen key={sessionUser?.id} onOpenPerson={handleOpenPerson} onOpenPost={handleOpenObservation}
               recentSearches={discoveryActivity.searches}
               savedSpeciesIds={discoveryActivity.saves.filter((item) => item.kind === 'species').map((item) => item.id)}
               historyDisabled={saveDisabled}
               onRecordSearch={(term) => { void updateActivity((signal) => activity.search(term, signal)); }}
               onRemoveSearch={(term) => { void updateActivity((signal) => activity.removeSearch(term, signal), term ? 'Removed recent search' : 'Cleared recent searches'); }}
               onSessionExpired={resetSession}
-              externalDiscovery
               speciesList={discovery?.species || []}
               hotspots={externalHotspots}
-              posts={posts}
               onSelectSpecies={handleSelectSpecies}
               onSelectHotspot={handleSelectHotspot}
               onNavigate={navigateTo}
@@ -929,7 +901,6 @@ export default function App() {
             <NotificationsScreen
               opportunitiesEnabled={opportunitiesEnabled}
               onToggleOpportunities={()=>void changeAlert(signal=>alerts.opportunity(!opportunitiesEnabled,signal))}
-              opportunityChecks={opportunityChecks}
               enabled={userProfile.pushAlertsEnabled}
               onToggleEnabled={()=>void handleUpdateProfile({pushAlertsEnabled:!userProfile.pushAlertsEnabled})}
               subscriptions={subscriptions}
@@ -951,7 +922,6 @@ export default function App() {
                   if(deviceRegistered)await client.disablePush(signal,sessionUser!.id);else await client.enablePush(signal,permission,nativeToken,sessionUser!.id);
                 }).finally(()=>setPushBusy(false));
               }}
-              pushStatus={pushStatus}
               notifications={notifications}
               onMarkAllRead={handleMarkAllNotificationsRead}
               onSelectNotification={handleSelectNotification}

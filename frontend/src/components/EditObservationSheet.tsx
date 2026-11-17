@@ -156,9 +156,8 @@ export function EditObservationSheet({
           </button>
         </div>
         <p className="text-xs text-[#42493e]">
-          Change your reported details and privacy. The photograph, extracted
-          EXIF and original publication date are preserved. Identification and
-          capture timezone remain unverified.
+          Change the details and privacy of this record. The photograph, its
+          camera settings and the original posting date stay the same.
         </p>
         {loading && <p role="status">Loading your record…</p>}
         {error && (
@@ -242,15 +241,15 @@ export function EditObservationSheet({
                   <option value="public">Public</option>
                 </select>
               </label>
-              <label className="flex items-center gap-2 min-h-11 text-sm"><input type="checkbox" checked={draft.hideExactLocation} onChange={event => setDraft({ ...draft, hideExactLocation: event.target.checked })} />Hide custom location and conditions from others (otherwise share only a rounded area)</label>
+              <label className="flex items-center gap-2 min-h-11 text-sm"><input type="checkbox" checked={draft.hideExactLocation} onChange={event => setDraft({ ...draft, hideExactLocation: event.target.checked })} />Hide location and weather from others (otherwise a custom spot is shared only as a rough area)</label>
               <p className="text-xs text-[#42493e]">
                 Your profile privacy can further restrict visibility. Exact
                 embedded coordinates are never published. Avoid typing private
                 coordinates in shared notes.
               </p>
-              <label className="block text-sm">UTC offset (optional)<input aria-label="Edited UTC offset" value={utcOffset} maxLength={6} onChange={event => { setUtcOffset(event.target.value); setRefreshConditions(true);  }} className="block w-full min-h-11 bg-[#f1f4f9] rounded-lg p-2" /></label>
-              <p className="text-xs">{record.conditions ? `${record.conditions.model} · ${record.conditions.matchedTime} ${record.conditions.timezone}` : 'No saved historical conditions.'} Location/time edits clear old conditions until a matching estimate loads.</p>
-              <button type="button" className="min-h-11 underline text-sm" onClick={() => setRefreshConditions(true)}>Refresh historical conditions</button>
+              <label className="block text-sm">Time zone offset (optional)<input aria-label="Edited UTC offset" value={utcOffset} maxLength={6} onChange={event => { setUtcOffset(event.target.value); setRefreshConditions(true);  }} className="block w-full min-h-11 bg-[#f1f4f9] rounded-lg p-2" /></label>
+              <p className="text-xs">{record.conditions ? 'Weather is saved with this record.' : 'No weather is saved with this record.'} Changing the place or time looks the weather up again.</p>
+              <button type="button" className="min-h-11 underline text-sm" onClick={() => setRefreshConditions(true)}>Look up the weather again</button>
               {(locationChanged || refreshConditions || draft.observedAt !== record.observedAt) && <ObservationConditionsPanel disabled={busy} point={weatherPoint} observedAt={draft.observedAt} utcOffset={utcOffset} onChange={setConditions} onSessionExpired={onSessionExpired} />}
               <label className="block text-sm">
                 Field notes

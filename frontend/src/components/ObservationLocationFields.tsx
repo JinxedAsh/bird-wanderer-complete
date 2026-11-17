@@ -20,18 +20,18 @@ export function ObservationLocationFields({ hotspots, hotspotId, point, disabled
   const nearest = nearestHotspot(point, hotspots);
   return <fieldset disabled={disabled} className="bg-[#f1f4f9] p-3 rounded-xl space-y-2 min-w-0 text-[12px]">
     <legend className="font-bold">Observation location</legend>
-    <label className="block">Location type<select aria-label="Observation location type" value={custom ? 'custom' : 'hotspot'} onChange={event => { const next = event.target.value === 'custom'; setCustom(next); if (next) manual(latitude, longitude, label); else onChange('', null); }} className="block w-full min-h-11 bg-white rounded-lg p-2"><option value="hotspot">eBird hotspot</option><option value="custom">Map pin or manual coordinates</option></select></label>
-    {!custom ? <label className="block">Hotspot<select aria-label="Observation hotspot" value={hotspotId} onChange={event => onChange(event.target.value, null)} className="block w-full min-h-11 bg-white rounded-lg p-2"><option value="">Choose a hotspot</option>{hotspotId && !hotspots.some(site => site.id === hotspotId) && <option value={hotspotId}>Current saved hotspot</option>}{hotspots.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}</select></label> : <>
+    <label className="block">Location type<select aria-label="Observation location type" value={custom ? 'custom' : 'hotspot'} onChange={event => { const next = event.target.value === 'custom'; setCustom(next); if (next) manual(latitude, longitude, label); else onChange('', null); }} className="block w-full min-h-11 bg-white rounded-lg p-2"><option value="hotspot">eBird hotspot</option><option value="custom">Map pin or coordinates</option></select></label>
+    {!custom ? <label className="block">Hotspot<select aria-label="Observation hotspot" value={hotspotId} onChange={event => onChange(event.target.value, null)} className="block w-full min-h-11 bg-white rounded-lg p-2"><option value="">Choose a hotspot</option>{hotspotId && !hotspots.some(site => site.id === hotspotId) && <option value={hotspotId}>Saved hotspot</option>}{hotspots.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}</select></label> : <>
       <label className="block">Private location label (optional)<input aria-label="Custom location label" value={label} maxLength={120} onChange={event => manual(latitude, longitude, event.target.value)} className="block w-full min-h-11 rounded-lg bg-white p-2" /></label>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <label>Latitude<input aria-label="Observation latitude" inputMode="decimal" value={latitude} onChange={event => manual(event.target.value, longitude, label)} className="block w-full min-h-11 rounded-lg bg-white p-2" /></label>
         <label>Longitude<input aria-label="Observation longitude" inputMode="decimal" value={longitude} onChange={event => manual(latitude, event.target.value, label)} className="block w-full min-h-11 rounded-lg bg-white p-2" /></label>
       </div>
-      <p>{point ? `Point source: ${point.source === 'exif' ? 'photo EXIF GPS (not independently verified)' : point.source}. Exact coordinates and label are owner-only.` : 'Enter both coordinates or choose a map pin. No GPS is inferred when the photograph has none.'}</p>
-      <p>Opening the map requests visible tiles from OpenStreetMap; its provider can see the viewed area. Manual coordinates work without map tiles.</p>
+      <p>{point ? `${point.source === 'exif' ? 'Location read from your photo. ' : ''}Exact coordinates and label are owner-only.` : 'Enter both coordinates or choose a map pin.'}</p>
       <button type="button" className="min-h-11 underline" onClick={() => setShowMap(value => !value)}>{showMap ? 'Close location map' : 'Open location map'}</button>
+      {showMap && <p className="text-[11px]">Map tiles load from OpenStreetMap.</p>}
       {showMap && !disabled && <ObservationPinMap point={point} onChoose={choose} />}
-      {nearest && <p>Nearest loaded hotspot: {nearest.site.name}, approximately {nearest.distanceKm.toFixed(1)} km away. A suggestion, not proof of capture location. <button type="button" className="min-h-11 underline" onClick={() => { setCustom(false); onChange(nearest.site.id, null); }}>Use this hotspot instead</button></p>}
+      {nearest && <p>Nearest hotspot: {nearest.site.name}, about {nearest.distanceKm.toFixed(1)} km away. <button type="button" className="min-h-11 underline" onClick={() => { setCustom(false); onChange(nearest.site.id, null); }}>Use this hotspot instead</button></p>}
     </>}
   </fieldset>;
 }

@@ -56,6 +56,7 @@ export interface PostExif {
 
 export interface CommunityPost {
   locationPoint?: { latitude: number; longitude: number } | null;
+  hotspotId?: string | null;
   authorId?: string;
   isFollowing?: boolean;
   isNearby?: boolean;
@@ -210,24 +211,6 @@ export interface ChatConversation {
   contextLocation: string;
   contextLifeNumber: string;
   messages: ChatMessage[];
-}
-
-export interface QuizQuestion {
-  id: string;
-  questionNumber: number;
-  totalQuestions: number;
-  prompt: string;
-  subPrompt: string;
-  imageUrl: string;
-  options: Array<{
-    id: string;
-    label: string;
-    text: string;
-  }>;
-  correctOptionId: string;
-  factTitle: string;
-  factSpecies: string;
-  factText: string;
 }
 
 export interface UserProfile {

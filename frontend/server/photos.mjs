@@ -5,7 +5,7 @@ export class PhotoError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 
-const userAgent = 'BirdWanderer/0.1 (https://github.com/JinxedAsh/bird-wanderer)';
+const userAgent = 'BirdWanderer/0.1 (https://github.com/JinxedAsh/bird-wanderer-complete)';
 
 // Commons attribution fields contain HTML. Return text only; React renders it
 // as text, never executable markup. Preserve author/credit instead of truncating.

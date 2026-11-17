@@ -2,6 +2,7 @@ import { SessionExpiredError } from './auth';
 import type { UserProfile, JournalEntry, CommunityPost } from '../types';
 import type { PhotoExif } from './discovery';
 import type { ObservationPoint } from './observation-form';
+import { fieldTime } from './discovery';
 
 export interface ObservationConditions {
   source: string; sourceUrl: string; model: string; observedAt: string; matchedTime: string; timezone: string;
@@ -125,24 +126,25 @@ export const observations = {
     (await request('/profile', signal, 'PATCH', change)).profile,
 };
 const camera = (exif: PhotoExif) =>
-  [exif.cameraMake, exif.cameraModel, exif.lens].filter(Boolean).join(' · ') || 'Camera metadata unavailable';
+  [exif.cameraMake, exif.cameraModel, exif.lens].filter(Boolean).join(' · ') || 'No camera details';
 export const observationEntry = (row: Observation): JournalEntry => ({
   weatherSourceUrl: row.conditions?.sourceUrl,
   id: row.id,
   speciesName: row.speciesName,
   scientificName: row.scientificName,
-  date: row.observedAt.replace('T', ' '),
+  date: fieldTime(row.observedAt),
   location: row.location,
   gear: camera(row.exif),
-  weather: row.conditions ? `${row.conditions.temperatureC ?? 'Unavailable'}°C · ${row.conditions.windKmh ?? 'Unavailable'} km/h · ${row.conditions.model} · ${row.conditions.matchedTime} ${row.conditions.timezone}. ${row.conditions.timeBasis}. Open-Meteo (CC BY 4.0)` : 'Historical conditions unavailable or withheld',
+  weather: row.conditions ? [row.conditions.temperatureC === null ? '' : `${row.conditions.temperatureC}°C`, row.conditions.windKmh === null ? '' : `${row.conditions.windKmh} km/h wind`].filter(Boolean).join(' · ') || 'Not recorded' : 'Not recorded',
   notes: row.notes,
-  habitatTag: 'User observation',
+  habitatTag: '',
   imageUrl: row.imageUrl,
   isVerified: false,
   inLifeList: row.inLifeList,
 });
 export const observationPost = (row: Observation): CommunityPost => ({
   locationPoint: row.observationLocation,
+  hotspotId: row.hotspotId,
   authorId: row.ownerId,
   isFollowing: row.isFollowing,
   id: row.id,
@@ -150,7 +152,7 @@ export const observationPost = (row: Observation): CommunityPost => ({
   authorHandle: row.authorHandle,
   authorAvatar: '/bird-wanderer-logo.svg',
   location: row.location,
-  timeAgo: row.observedAt.replace('T', ' '),
+  timeAgo: fieldTime(row.observedAt),
   speciesName: row.speciesName,
   speciesScientific: row.scientificName,
   speciesId: row.speciesId,
@@ -169,7 +171,7 @@ export const observationPost = (row: Observation): CommunityPost => ({
   isLiked: row.isLiked ?? false,
   isSaved: row.isSaved ?? false,
   comments: row.comments || [],
-  weather: row.conditions ? { lighting: row.conditions.cloudCoverPercent === null ? 'Cloud unavailable' : `${row.conditions.cloudCoverPercent}% cloud`, temp: row.conditions.temperatureC === null ? 'Unavailable' : `${row.conditions.temperatureC}°C`, wind: row.conditions.windKmh === null ? 'Unavailable' : `${row.conditions.windKmh} km/h`, description: `${row.conditions.model} · ${row.conditions.matchedTime} ${row.conditions.timezone}. ${row.conditions.timeBasis}. Open-Meteo (CC BY 4.0)`, sourceUrl: row.conditions.sourceUrl } : undefined,
+  weather: row.conditions ? { lighting: row.conditions.cloudCoverPercent === null ? 'Cloud unavailable' : `${row.conditions.cloudCoverPercent}% cloud`, temp: row.conditions.temperatureC === null ? 'Unavailable' : `${row.conditions.temperatureC}°C`, wind: row.conditions.windKmh === null ? 'Unavailable' : `${row.conditions.windKmh} km/h`, description: 'Estimated for the hour of the sighting.', sourceUrl: row.conditions.sourceUrl } : undefined,
 });
 
 export interface PublicBirder {

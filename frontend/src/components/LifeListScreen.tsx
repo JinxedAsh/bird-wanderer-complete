@@ -58,7 +58,7 @@ export const LifeListScreen: React.FC<LifeListScreenProps> = ({
           </div>
         </div>
         <p className="text-[12px] text-[#42493e]">
-          Your lifelong naturalist field index and photographic records across registered territories.
+          Every species you have logged, with your photographs of each.
         </p>
       </section>
 
@@ -170,7 +170,7 @@ export const LifeListScreen: React.FC<LifeListScreenProps> = ({
                     </span>
                     <span className="text-[#c2c9bb]">·</span>
                     <span className="whitespace-nowrap">
-                      {item.photosCount || 0} photos
+                      {item.photosCount || 0} {item.photosCount === 1 ? 'photo' : 'photos'}
                     </span>
                   </div>
                 </div>
@@ -216,7 +216,7 @@ export const LifeListScreen: React.FC<LifeListScreenProps> = ({
           <div className="flex flex-col min-w-0">
             <span className="text-[13px] font-bold text-[#181c20]">Field Observation Drawer</span>
             <p className="text-[12px] text-[#42493e] mt-0.5 leading-relaxed">
-              Tap any species to view first sighting date, location coordinates, and attached gallery.
+              Tap any species to see where you first logged it and how many photographs you have.
             </p>
           </div>
         </div>
@@ -264,10 +264,7 @@ export const LifeListScreen: React.FC<LifeListScreenProps> = ({
                   First Sighting
                 </span>
                 <span className="text-[13px] font-bold text-[#181c20] truncate mt-0.5">
-                  {selectedDrawerSpecies.firstSightingLocation || 'Delhi Ridge'}
-                </span>
-                <span className="text-[10px] font-mono text-[#42493e] mt-0.5">
-                  {selectedDrawerSpecies.firstSightingCoords || '28.5921° N, 77.1894° E'}
+                  {selectedDrawerSpecies.firstSightingLocation || 'Not logged yet'}
                 </span>
               </div>
 
@@ -276,10 +273,7 @@ export const LifeListScreen: React.FC<LifeListScreenProps> = ({
                   Captured Media
                 </span>
                 <span className="text-[13px] font-bold text-[#181c20] mt-0.5">
-                  {selectedDrawerSpecies.photosCount || 0} Photographs
-                </span>
-                <span className="text-[10px] font-semibold text-[#154212] mt-0.5">
-                  Raw RAW+JPEG stored
+                  {selectedDrawerSpecies.photosCount || 0} {selectedDrawerSpecies.photosCount === 1 ? 'Photograph' : 'Photographs'}
                 </span>
               </div>
             </div>

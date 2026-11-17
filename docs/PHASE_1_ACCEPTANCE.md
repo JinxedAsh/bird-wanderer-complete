@@ -30,7 +30,7 @@ Baseline: main d00be49, 80 tests/type/build passed 13 October. Unrelated deleted
 | Multiple reference comparisons | Implemented: up to 3 exact P18/depicts files, credits/EXIF, individual sample denominators and readable ranges; live Roller 3/2, Kingfisher 3/3, Cassowary 2/1. Empty/single/provider failure have fixture checks only. |
 | Local timing/weather preparation | Implemented dated timezone-aware approximate light windows and explicit daylight/rain/wind preparation candidates. No bird-activity or optimal-weather claim. |
 | Seasonal activity | Partial: official Okhla narratives for Pintail/Gadwall plus Yamuna site winter context. Numerical weekly frequency blocked by Cornell authentication/export availability; normal browser confirmed sign-in required. |
-| Measured difficulty | Unsupported: connected sources lack a defensible measured rating. Unrated links to motion/light/gear preparation; no fabricated score. |
+| Measured difficulty | Unsupported: connected sources lack a defensible measured rating. The **Shot tips** tile links to motion/light/gear preparation; no fabricated score. |
 | Historical environmental matching | Unsupported: reference GPS, reliable timezone, historical conditions, distance and sensor/crop are not established. Future forecasts and photo ranges are kept separate. |
 | Access/logistics | Partial verified coverage: 4 venues, 8 eBird records (Lodhi 1, Sunder 2, Yamuna 2, Okhla 3). Published conflicts/historical tariffs/unknown permission and gates are explicit; broader/current operator confirmation remains manual. |
 | Region coverage | Implemented Delhi + adjacent Gautam Buddha Nagar runtime; exact scope labels/dedup, chart primary scope preserved. Okhla search/pins/reports/weather/access passed. |
@@ -47,7 +47,7 @@ The most useful next input is a legitimately downloaded eBird histogram export f
 
 Measured difficulty and verified environment matching require new trustworthy evidence or explicit requirement reconciliation. Investigate published evidence when available; do not convert general advice into an ordinal rating or attach a future forecast to historical EXIF. Remaining manual checks: full Oppo flow, genuine weak-network/provider failure, tunnel logout/recovery, operator-currentness/entrance confirmation and final design approval. Android was deferred for that Phase 1 increment; the full-cycle authorization on23 October supersedes it. Android source/build/device work is now in progress under PROJECT_COMPLETION_PLAN.md.
 
-Delivered: [PR #22](https://github.com/JinxedAsh/bird-wanderer/pull/22) is merged at a9902396a9f932b9192c22d15765c232ac156336, confirmed against GitHub on 23 October. Merged-commit CI passed; the merge occurred on 13 October IST (12 October UTC). No new test/browser result is implied by this status refresh. User's Start-Dev.ps1 deletion/Test.ps1 rename remains untouched/unpublished. Read Git status before resumed work; do not duplicate delivery or use stale LAN/tunnel addresses.
+Delivered: PR #22 is merged at a9902396a9f932b9192c22d15765c232ac156336, confirmed against GitHub on 23 October. Merged-commit CI passed; the merge occurred on 13 October IST (12 October UTC). No new test/browser result is implied by this status refresh. User's Start-Dev.ps1 deletion/Test.ps1 rename remains untouched/unpublished. Read Git status before resumed work; do not duplicate delivery or use stale LAN/tunnel addresses.
 
 ## Finite Phase 1 closure queue, 23 October
 

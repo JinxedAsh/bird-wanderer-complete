@@ -368,7 +368,7 @@ export const FieldChatScreen: React.FC<FieldChatScreenProps> = ({
                     {p.name}
                   </button>
                 ))}
-                {!hotspots.length && <p>Load discovery hotspots first.</p>}
+                {!hotspots.length && <p>Hotspots are still loading. Try again in a moment.</p>}
               </>
             )}
             {picker === 'profile' && person && (
@@ -381,7 +381,7 @@ export const FieldChatScreen: React.FC<FieldChatScreenProps> = ({
                   {person.photosCount} visible photographs · {person.birdsCount}{' '}
                   species · {person.followersCount} followers
                 </p>
-                <p>{person.primaryRig || 'Camera details unavailable'}</p>
+                <p>{person.primaryRig || 'No camera listed'}</p>
               </div>
             )}
           </div>
@@ -606,7 +606,7 @@ export const FieldChatScreen: React.FC<FieldChatScreenProps> = ({
           </div>
 
           {/* Active Field Context Strip */}
-          <div className="px-4 py-1.5 bg-[#f1f4f9] flex items-center justify-between text-[#42493e] text-[11px] border-b border-[#e0e3e8]">
+          {activeChat?.contextLocation && <div className="px-4 py-1.5 bg-[#f1f4f9] flex items-center justify-between text-[#42493e] text-[11px] border-b border-[#e0e3e8]">
             <span className="flex items-center gap-1 truncate">
               <span className="material-symbols-outlined text-[13px] text-[#20402b]">
                 pin_drop
@@ -616,13 +616,13 @@ export const FieldChatScreen: React.FC<FieldChatScreenProps> = ({
             <span className="text-[#72796e] flex-shrink-0">
               {activeChat?.contextLifeNumber}
             </span>
-          </div>
+          </div>}
 
           {/* Messages Stream */}
           <div className="flex flex-col space-y-3 px-4 py-4 min-h-[360px]">
             <div className="flex items-center justify-center my-1">
               <span className="px-2.5 py-0.5 rounded-full bg-[#ebeef3] text-[#42493e] text-[10px] font-bold tracking-wide uppercase">
-                Stored field messages · India time
+                Field messages
               </span>
             </div>
 
@@ -702,7 +702,7 @@ export const FieldChatScreen: React.FC<FieldChatScreenProps> = ({
 
                   {isMe && (
                     <div className="flex items-center gap-1 pr-1 text-[10px] text-[#72796e]">
-                      <span>Stored on server</span>
+                      <span>Sent</span>
                       <span className="material-symbols-outlined text-[13px] text-[#3b6934]">
                         done_all
                       </span>

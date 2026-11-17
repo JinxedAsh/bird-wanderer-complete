@@ -1101,6 +1101,53 @@ SpeciesDetailScreen matches reported hotspot IDs to the loaded catalogue, checks
 4. **Why do photographs and counts differ from the design?** Production source/account data is evidence; screenshot examples are not replacements for it.
 5. **What is the limit of this verification?** It proves the recorded desktop browser states and dimensions, not every data state or physical phone.
 
+### Entry 65 — Final cleanup: user-facing wording, test-data removal tool and documentation
+
+**Date/group:** 16 November 2026 IST; final polish after all four phases, on branch `cleanup/frontend-design-match`, based on main `f4bd269` (which adds the Azure Web App deployment workflow). Prepared by Anirudh Jain (manager/deployer) on a separate branch for review before any merge into main.
+
+**Problem:** several screens showed developer or debug text to ordinary users: eBird region codes (IN-DL + IN-UP-GB), fetch timestamps, "Using server cache", provider model names and long evidence caveats (for example "People and posts are searched on the server using your current access"). Prototype sample data (`mockData.ts`) still seeded state, and a placeholder image said "Photo not connected yet". Development and test runs had also left many test accounts and posts in the live database.
+
+**What changed and why:**
+
+- *Wording on every screen.* Attribution required by the data licences stays, but short: one linked "Data: eBird" line under eBird lists (Explore, Search, Hotspots), the existing photo-credit icon for Wikimedia creator and licence, a short credit line under recordings and Wikipedia excerpts, and an Open-Meteo credit beside weather. Region codes now read as place names (Delhi & Noida); dates read as "4 Oct 2026, 07:15". Retrieval times, cache state, model names, timezone notes and internal caveats were removed. Missing values show "—" instead of "Unavailable"/"Unverified" labels. Honest information users need (privacy of exact locations, that directions lead to the hotspot marker, conservation advice, failures with Try again) is kept.
+- *Sample data and dead code.* Removed `src/data/mockData.ts` and every prototype branch it fed (sample hotspot map image, sample gallery, sample weather, "Verified Field Shot" badge, fixed sighting counts). Neutral starting values live in `src/lib/defaults.ts`. The hotspot detail's "Recent Field Photographs" strip now shows real community posts from that hotspot and is hidden when there are none; "Field Notes & Gear", which never had real values, was removed. The placeholder image is now a text-free bird illustration. Removed the AI Studio template leftovers (`metadata.json`, `DISABLE_HMR` settings) and unused types/props.
+- *Test-data cleanup.* New `scripts/cleanup-test-data.mjs` (`pnpm cleanup:test-data`). Every run first creates and verifies a backup with the existing backup script; the default is a dry run listing every account with its creation date and counts and the reasons it looks like test data; deletion needs `--apply` plus a keep-list, and EVAL PRIVATE/PUBLIC/CHAT/RETRY records stay unless `--include-eval`. Deletions run in one transaction with a foreign-key check before commit; photo files, orphan files and expired sessions are removed afterwards. Running it twice changes nothing.
+- *Documentation.* README rewritten for the finished project; `.env.example` lists every setting with placeholders; AI-assistant and chat-workflow wording removed from user-facing docs (dated entries in this record are unchanged); links to the superseded repository removed outside this record.
+
+**Protected behaviour kept unchanged:** "EXIF unavailable", "Cannot reach your field records. Check your connection and retry.", "Observation not found", "Photo not found" and "Shared observation no longer available"; visibility and access rules; photo metadata stripping; origin checks; rate limiting. No privacy or security assertion was removed from the tests.
+
+**Checks:** `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm test` (178/178: the previous 173 plus 5 cleanup tests on temporary databases) and `pnpm build` passed; main bundle 441.46 kB (was 493.31 kB). Frontend rendering tests were updated where wording legitimately changed, and the test harness now maps every relative import to its compiled file instead of a hand-maintained list. Every screen was captured at 390px and 320px against synthetic provider data and compared with docs/design-reference; no horizontal overflow at either width. Android Gradle checks were not run locally (no Android SDK available); no Android source changed, and the Android workflow runs on the pull request. Merging to main also triggers the Azure Web App deployment workflow, which repeats lint, tests and build first.
+
+**Live-server cleanup:** stop the server, then from `frontend`, dry run first and review the list, then apply with the keep-list:
+
+```text
+pnpm cleanup:test-data --backup <new folder outside the repo> --server-stopped
+pnpm cleanup:test-data --backup <another new folder> --server-stopped --apply --keep "Anirudh,Ayush,Sourabh,Uday,Ravi"
+```
+
+**Viva Notes:**
+
+1. **Why keep any attribution at all?** eBird, Wikimedia Commons, Wikipedia and Open-Meteo licences require credit; it now appears once, briefly, where the data is shown.
+2. **Why does the cleanup always back up first?** Deleting accounts cannot be undone in the app; a verified backup is the undo.
+3. **How does one transaction help?** Either every row belonging to the removed accounts is deleted, or none is; a failure leaves the database exactly as it was.
+4. **Why need a keep-list?** Heuristics can be wrong; naming the real accounts guarantees they survive even if one looks like test data.
+5. **Why are photo files deleted after the commit?** If the database change failed, the files would still be needed; any file left behind is removed as an orphan on the next run.
+
+### Entry 66 — Okhla Bird Sanctuary hotspot page failed to load its reports
+
+**Date/group:** 16 November 2026 IST; found while comparing branch `cleanup/frontend-design-match` with main on a local run with a real eBird key. Fixed by Anirudh Jain on the same branch. The fault was already present on main.
+
+**Problem:** the Okhla Bird Sanctuary hotspot page (L2362886) showed "eBird returned unsupported hotspot detail records." and no recent sightings, while every other hotspot tested (Okhla Barrage, Okhla Bird Sanctuary Gate and Tar Road, Asola, Lodhi Gardens, Dhanauri, Najafgarh, Yamuna Biodiversity Park and others) loaded normally. For this hotspot eBird's recent-observations response (149 reports) also contained 41 reports filed at linked hotspots: Okhla Bird Sanctuary Gate, Okhla Bird Sanctuary (Tar Road) and Chilla Khadar--Mayur Vihar. The server treated any report from another location as a malformed response and rejected the whole page.
+
+**What changed and why:** `server/discovery.mjs` now keeps only the reports filed at the requested hotspot and drops the others instead of failing. Those places have their own pages, so nothing is lost and no report is shown under the wrong hotspot. A species list that is not a list of species codes is still rejected.
+
+**Checks:** a new test feeds a response that mixes this hotspot's report with reports from two other locations and checks that only this hotspot's report is returned; the existing wrong-location test now expects an empty list instead of an error. Both fail on the previous code and pass now. Locally the Okhla Bird Sanctuary page loads its recent sightings.
+
+**Viva Notes:**
+
+1. **Why not show the linked hotspots' reports too?** Each report is shown at the place it was filed; showing Gate reports under the Sanctuary page would misplace them, and the Gate has its own page.
+2. **Why did only Okhla fail?** It is the only tested hotspot for which eBird returns reports from linked locations.
+
 ## 4. How the current application fits together
 
 The interface is what the user sees and interacts with. The backend is the program that receives requests and checks account information. The database is where persistent account information is saved.

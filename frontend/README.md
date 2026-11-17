@@ -40,9 +40,29 @@ The suite also includes server-rendered frontend regression checks and HTTP chec
 
 ## Current status
 
-Implemented: registration, password hashing, login, session restoration, logout, origin checks and authentication rate limiting. External species/hotspot discovery now uses eBird when configured; later-phase screens still display prototype fixtures. Password recovery does not send email yet; the interface reports this honestly.
+All four phases are delivered: accounts, discovery and planning; profiles, uploads, journal and community; alerts; and the quiz, challenges, messaging, search and notifications. The Android APK wraps the same interface. Permanent hosting (an Azure VM) is the next step. See `../README.md` for the overview, `../docs/DEVELOPMENT_RECORD.md` for the dated history and `../docs/design-reference` for the approved screen designs.
 
-See `../docs/AUTH_WALKTHROUGH.md` for the request/data flow and `../docs/DEVELOPMENT_RECORD.md` for deadlines and the living documentation link. Original screen designs are in `../docs/design-reference`.
+## Removing leftover test data
+
+Development and test runs left test accounts and posts in the live database. `scripts/cleanup-test-data.mjs` removes them safely:
+
+- Every run first creates and verifies a backup with `scripts/backup.mjs`, so the app must be stopped and the backup folder must be new and outside the repository.
+- Without `--apply` it is a dry run: it prints every account with its creation date and counts of posts, photos, comments, follows and messages, and marks likely test accounts with the reason (test/example email domains; names or emails containing test, demo, eval, qa, temp and similar; walkthrough role names such as Owner or Viewer; bursts of empty accounts created together). An account with no activity is listed but not marked on that basis alone.
+- `--apply` deletes only accounts marked `delete`, and requires `--keep` with the real team accounts. Keep entries match a whole name word, the full name, the email or its local part, so `Ravi` keeps `Ravi Ranjan`. Kept accounts always win.
+- EVAL PRIVATE / EVAL PUBLIC / EVAL CHAT / EVAL RETRY records stay by default, together with both people in an EVAL CHAT. Add `--include-eval` to remove them too, including from kept accounts.
+- Each account's posts, photo files, comments, likes, follows, conversations and messages, subscriptions, notifications and sessions are removed in one database transaction. Afterwards, photo files that no record uses and expired sessions are removed. Counts are printed before and after; running it again changes nothing.
+- `--delete "email-or-id,..."` adds specific accounts that are not marked automatically.
+
+With the server stopped, from `frontend` and with the same `DATABASE_PATH`/`MEDIA_PATH` the server uses:
+
+```sh
+# 1. Dry run: review the list
+pnpm cleanup:test-data --backup /path/outside/repo/backup-before-cleanup --server-stopped
+# 2. Delete the accounts marked "delete"
+pnpm cleanup:test-data --backup /path/outside/repo/backup-cleanup-apply --server-stopped --apply --keep "Anirudh,Ayush,Sourabh,Uday,Ravi"
+```
+
+To undo, restore the backup as described in `../docs/RELEASE_RUNBOOK.md`.
 
 ## External discovery setup
 
@@ -109,7 +129,7 @@ Successful/no-match results are cached in memory for 24 hours, limited to 200 na
 
 ### Persistent discovery saves and search history
 
-Bird bookmarks and hotspot SAVE/header controls now use per-account SQLite records. In Search, choose Birds and **Saved birds only**, then clear the query to browse targets. Hotspots retains its existing **Saved** filter. Search starts empty; press Enter or open a bird/hotspot result to record a nonempty query. Recent chips replay/promote a search; their remove control and Clear All update the database. Typing alone does not write history. At most ten normalized, case-insensitively deduplicated searches (1–100 characters) and 500 saved references are retained per user.
+Bird bookmarks and hotspot SAVE/header controls now use per-account SQLite records. In Search, turn on the **Saved birds** filter, then clear the query to browse targets. Hotspots retains its existing **Saved** filter. Search starts empty; press Enter or open a bird/hotspot result to record a nonempty query. Recent chips replay/promote a search; their remove control and Clear All update the database. Typing alone does not write history. At most ten normalized, case-insensitively deduplicated searches (1–100 characters) and 500 saved references are retained per user.
 
 The existing database gains `discovery_saves` and `search_history` automatically at startup; accounts/sessions are preserved. `GET /api/activity` returns your saves/history; `PUT /api/activity/saves/:kind/:id` takes `{saved: boolean}`; `POST /api/activity/searches` takes `{term}`; `DELETE /api/activity/searches` takes `{term}` or `{}` for Clear All. All routes require the existing session and mutations require an allowed Origin. User identity comes from the session, never a submitted user ID. New saves validate against the current eBird catalogue; existing references/history can be loaded and removed without provider access.
 
@@ -125,7 +145,7 @@ Distances use the Haversine formula in the browser, with unrounded values for fi
 
 ### Seasonal references and exposure comparisons
 
-The existing guide adds two progressive disclosures: **Check regional seasonal patterns** links the validated configured region's eBird chart and names the species to find; **Prepare for subject motion** changes advice for perched versus flying birds and compares a user-selected shutter with the current photo's exposure/ISO. The ratio assumes unchanged light/aperture, does not set camera values and is withheld without valid current evidence. Selections reset on species navigation. No key, request, schema or dependency was added. Best time and measured species difficulty remain unverified; historical values are not imported. See [Planning extension](../docs/SEASONAL_PLANNING_WALKTHROUGH.md).
+The existing guide adds two progressive disclosures: **When is it seen here?** links the validated configured region's eBird chart and names the species to find; **Perched or in flight?** changes advice for perched versus flying birds and compares a user-selected shutter with the current photo's exposure/ISO. The ratio assumes unchanged light/aperture, does not set camera values and is withheld without valid current evidence. Selections reset on species navigation. No key, request, schema or dependency was added. Best time and measured species difficulty remain unverified; historical values are not imported. See [Planning extension](../docs/SEASONAL_PLANNING_WALKTHROUGH.md).
 
 ### Reviewed hotspot access
 

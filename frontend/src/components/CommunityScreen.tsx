@@ -396,16 +396,16 @@ export const CommunityScreen: React.FC<CommunityScreenProps> = ({
                   <div className="flex flex-1 items-center gap-1 min-w-[120px]">
                     <span className="material-symbols-outlined text-[14px] flex-shrink-0">photo_camera</span>
                     <span className="break-words">
-                      {post.exif.camera} · {post.exif.lens}
+                      {post.exif.camera}{post.exif.lens !== 'Unavailable' && !post.exif.camera.includes(post.exif.lens) ? ` · ${post.exif.lens}` : ''}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 font-mono text-[11px] text-[#181c20] flex-shrink-0">
+                  {[post.exif.iso, post.exif.aperture, post.exif.shutter].some((value) => value !== 'Unavailable') && <div className="flex items-center gap-1.5 font-mono text-[11px] text-[#181c20] flex-shrink-0">
                     <span aria-label={`ISO ${post.exif.iso}`}>ISO {post.exif.iso === 'Unavailable' ? '—' : post.exif.iso}</span>
                     <span>·</span>
                     <span aria-label={`Aperture ${post.exif.aperture}`}>{post.exif.aperture === 'Unavailable' ? '—' : post.exif.aperture}</span>
                     <span>·</span>
                     <span aria-label={`Shutter ${post.exif.shutter}`}>{post.exif.shutter === 'Unavailable' ? '—' : post.exif.shutter}</span>
-                  </div>
+                  </div>}
                 </div>
 
                 {/* Social Action Bar */}
@@ -532,14 +532,14 @@ export const CommunityScreen: React.FC<CommunityScreenProps> = ({
               {/* Habitat & Weather */}
               <div className="bg-[#f1f4f9] rounded-xl p-3.5 flex flex-col gap-2">
                 <span className="text-[11px] uppercase tracking-wider text-[#154212] font-bold">
-                  Habitat & Field Weather
+                  Field Weather
                 </span>
                 <div className="grid grid-cols-3 gap-2 text-center pt-1">
                   <div className="bg-white p-2 rounded-lg shadow-xs">
                     <span className="material-symbols-outlined text-[#904d00] text-[18px]">sunny</span>
-                    <p className="text-[10px] text-[#42493e] mt-0.5">Cloud estimate</p>
+                    <p className="text-[10px] text-[#42493e] mt-0.5">Cloud</p>
                     <p className="text-[12px] font-bold text-[#181c20]">
-                      {selectedPostForDetails.weather?.lighting || 'Unverified'}
+                      {selectedPostForDetails.weather?.lighting || '—'}
                     </p>
                   </div>
                   <div className="bg-white p-2 rounded-lg shadow-xs">
@@ -548,20 +548,20 @@ export const CommunityScreen: React.FC<CommunityScreenProps> = ({
                     </span>
                     <p className="text-[10px] text-[#42493e] mt-0.5">Temp</p>
                     <p className="text-[12px] font-bold text-[#181c20]">
-                      {selectedPostForDetails.weather?.temp || 'Unverified'}
+                      {selectedPostForDetails.weather?.temp || '—'}
                     </p>
                   </div>
                   <div className="bg-white p-2 rounded-lg shadow-xs">
                     <span className="material-symbols-outlined text-[#2d5a27] text-[18px]">air</span>
                     <p className="text-[10px] text-[#42493e] mt-0.5">Wind</p>
                     <p className="text-[12px] font-bold text-[#181c20]">
-                      {selectedPostForDetails.weather?.wind || 'Unverified'}
+                      {selectedPostForDetails.weather?.wind || '—'}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {selectedPostForDetails.weather?.description && <p className="text-[12px]">{selectedPostForDetails.weather.description} <a href={selectedPostForDetails.weather.sourceUrl} target="_blank" rel="noreferrer" className="underline">Weather source</a></p>}
+              {selectedPostForDetails.weather?.description && <p className="text-[11px] text-[#42493e]">{selectedPostForDetails.weather.description} Weather data: <a href={selectedPostForDetails.weather.sourceUrl} target="_blank" rel="noreferrer" className="underline">Open-Meteo</a> (CC BY 4.0).</p>}
               {/* Sensor & Optical Data */}
               <div className="bg-[#f1f4f9] rounded-xl p-3.5 flex flex-col gap-2">
                 <span className="text-[11px] uppercase tracking-wider text-[#42493e] font-bold">
@@ -604,7 +604,7 @@ export const CommunityScreen: React.FC<CommunityScreenProps> = ({
                   </span>
                 </div>
 
-                {selectedPostForDetails.commentsCount>(selectedPostForDetails.comments?.length||0)&&<p className="text-xs text-[#42493e]">Showing the latest {selectedPostForDetails.comments?.length||0} replies. Earlier replies are not loaded.</p>}
+                {selectedPostForDetails.commentsCount>(selectedPostForDetails.comments?.length||0)&&<p className="text-xs text-[#42493e]">Showing the latest {selectedPostForDetails.comments?.length||0} replies.</p>}
                 {selectedPostForDetails.comments && selectedPostForDetails.comments.length > 0 ? (
                   selectedPostForDetails.comments.map((comm) => (
                     <div key={comm.id} className="bg-[#f1f4f9] rounded-xl p-3 flex gap-2.5">

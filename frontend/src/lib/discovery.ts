@@ -1,6 +1,24 @@
 import type { BirdSpecies, Hotspot } from '../types';
 import { SessionExpiredError } from './auth';
 
+// Friendly names for the eBird region codes this project is deployed with.
+// Any other configured code is shown as it is rather than guessed.
+const REGION_NAMES: Record<string, string> = { 'IN-DL': 'Delhi', 'IN-UP-GB': 'Noida' };
+export function regionName(label?: string | null): string {
+  if (!label) return '';
+  return label.split('+').map((code) => REGION_NAMES[code.trim()] || code.trim()).filter(Boolean).join(' & ');
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// Turns a stored local time such as "2026-10-04 07:15" into "4 Oct 2026, 07:15".
+// The clock value is kept exactly; nothing is converted between time zones.
+export function fieldTime(value?: string | null): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/.exec(value || '');
+  if (!match || !MONTHS[Number(match[2]) - 1]) return value || '';
+  const day = `${Number(match[3])} ${MONTHS[Number(match[2]) - 1]} ${match[1]}`;
+  return match[4] ? `${day}, ${match[4]}:${match[5]}` : day;
+}
+
 export interface DiscoveryCatalogue {
   coverageLabel?: string;
   regions?: string[];

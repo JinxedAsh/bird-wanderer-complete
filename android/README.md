@@ -62,6 +62,6 @@ Optional Android Firebase configuration: copy [firebase.properties.example](fire
 
 ## Verified CI preview artifact —26 October2026
 
-[Android run40280140795](https://github.com/JinxedAsh/bird-wanderer/actions/runs/40280140795) built source4cc3507. Download the bird-wanderer-android-preview artifact (14-day retention). Debug package org.birdwanderer.app.debug/version0.1.0-debug/min API26/target API36 has a verified v2 signature; SHA-256 E7EBE3C74D38E02560BB390586D01A27B3E14D3E4998BE6CF4A8184FE5E25015. The release APK remains unsigned. Later acceptance-documentation changes leave runtime/build inputs identical.
+Android run40280140795 built source4cc3507. Download the bird-wanderer-android-preview artifact (14-day retention). Debug package org.birdwanderer.app.debug/version0.1.0-debug/min API26/target API36 has a verified v2 signature; SHA-256 E7EBE3C74D38E02560BB390586D01A27B3E14D3E4998BE6CF4A8184FE5E25015. The release APK remains unsigned. Later acceptance-documentation changes leave runtime/build inputs identical.
 
 Downloaded reports show9/9 native tests, zero failures and lint0errors/4warnings: OldTargetApi, AndroidGradlePluginVersion, GradleDependency, SetJavaScriptEnabled. Earlier local checks recorded two warnings; CI additionally detects newer target/tool versions. The tested SDK/Gradle/Firebase pins remain unchanged and required JavaScript remains restricted to trusted origins. This is not a Maven vulnerability scan or proof of physical-device/provider acceptance.

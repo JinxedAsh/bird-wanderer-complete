@@ -1,7 +1,6 @@
-import { InformationDisclosure } from './InformationDisclosure';
 import React, { useMemo, useState } from 'react';
 import { BirdSpecies, Hotspot, ScreenType } from '../types';
-import type { SpeciesLocations } from '../lib/discovery';
+import { fieldTime, regionName, type SpeciesLocations } from '../lib/discovery';
 import { SpeciesPhoto, type PhotoLoadState } from './SpeciesPhoto';
 import { PhotoPlanning } from './PhotoPlanning';
 import { SpeciesInfoPanel } from './SpeciesInfoPanel';
@@ -44,24 +43,15 @@ export const SpeciesDetailScreen: React.FC<SpeciesDetailScreenProps> = ({
   onQuickLog,
   showToast,
 }) => {
-  const [localBookmark, setIsBookmarked] = useState(false);
-  const isBookmarked = saved ?? localBookmark;
+  const isBookmarked = Boolean(saved);
   const [isSightingsExpanded, setIsSightingsExpanded] = useState(true);
   const [photoState, setPhotoState] = useState<PhotoLoadState>({ speciesId: species.id, photo: null, loading: true, error: '' });
   const mappedHotspots = useMemo(() => {
     const reportedIds = new Set(locations?.locations.map((location) => location.hotspotId));
     return hotspots.filter((hotspot) => reportedIds.has(hotspot.id) && hotspotCoordinates(hotspot));
   }, [hotspots, locations]);
-  const toggleBookmark = () => {
-    if (onToggleBookmark) { onToggleBookmark(); return; }
-    const next = !isBookmarked;
-    setIsBookmarked(next);
-    showToast(
-      next
-        ? `${species.name} saved to your field target list!`
-        : `Removed from target list`
-    );
-  };
+  const toggleBookmark = () => onToggleBookmark?.();
+  const region = regionName(species.coverageLabel || species.region);
 
   const focusSection = (id: string) => {
     const section = document.getElementById(id);
@@ -87,9 +77,9 @@ export const SpeciesDetailScreen: React.FC<SpeciesDetailScreenProps> = ({
             </span>
             Target Species
           </span>
-          <span title={species.orderFamily || 'Coraciiformes'} className="min-w-0 truncate px-2 min-[360px]:px-2.5 py-1 rounded-full bg-[#ebeef3] text-[#42493e] text-[11px] font-semibold">
-            {species.orderFamily || 'Coraciiformes'}
-          </span>
+          {species.orderFamily && species.orderFamily !== 'Not available from eBird' && <span title={species.orderFamily} className="min-w-0 truncate px-2 min-[360px]:px-2.5 py-1 rounded-full bg-[#ebeef3] text-[#42493e] text-[11px] font-semibold">
+            {species.orderFamily}
+          </span>}
         </div>
 
         <div className="flex shrink-0 items-center gap-1 min-[360px]:gap-2">
@@ -121,13 +111,6 @@ export const SpeciesDetailScreen: React.FC<SpeciesDetailScreenProps> = ({
       {/* Hero Photo Stage */}
       <div className="px-4 pb-2">
         <SpeciesPhoto key={species.id} species={species} hero onSessionExpired={onSessionExpired} onPhotoStateChange={setPhotoState} frameClassName="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-[#ebeef3] shadow-sm">
-
-          {/* Ambient Badge */}
-          {!species.source && <div className="absolute bottom-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-md text-white text-[11px] font-medium shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-[#fe932c] animate-pulse"></span>
-            <span>Verified Field Shot • 1/2500s ƒ/5.6</span>
-          </div>}
-
         </SpeciesPhoto>
       </div>
 
@@ -135,13 +118,13 @@ export const SpeciesDetailScreen: React.FC<SpeciesDetailScreenProps> = ({
       <div className="px-4 pt-1 pb-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-[22px] min-[360px]:text-[26px] leading-tight font-bold text-[#181c20] tracking-tight">{species.name}</h2>
-          <span title={species.iucnStatus ? undefined : 'Status unavailable: conservation assessment'} aria-label={species.iucnStatus ? undefined : 'Status unavailable: conservation assessment'} className="text-[10px] shrink-0 text-[#904d00] px-2 py-0.5 rounded bg-[#ffdcc3] uppercase tracking-wide font-medium">
-            {species.iucnStatus || (species.source ? 'Unknown' : 'LC')}
-          </span>
+          {species.iucnStatus && <span title="Conservation status" className="text-[10px] shrink-0 text-[#904d00] px-2 py-0.5 rounded bg-[#ffdcc3] uppercase tracking-wide font-medium">
+            {species.iucnStatus}
+          </span>}
         </div>
         <p className="text-[14px] text-[#42493e] italic mt-0.5">
-          {species.scientificName}{' '}
-          <span className="not-italic text-[#72796e]">• {species.alias || 'Field Specimen'}</span>
+          {species.scientificName}
+          {species.alias && <span className="not-italic text-[#72796e]"> • {species.alias}</span>}
         </p>
       </div>
 
@@ -155,10 +138,10 @@ export const SpeciesDetailScreen: React.FC<SpeciesDetailScreenProps> = ({
           </div>
           <div className="mt-2">
             <span className="text-[20px] font-medium text-[#181c20] block leading-tight">
-              {species.source ? 'Reference' : species.habitat || 'Wetlands'}
+              Field guide
             </span>
             <span className="text-[12px] text-[#42493e]">
-              {species.source ? <button type="button" onClick={() => focusSection('species-information')} className="font-semibold text-[#154212] underline">Identification &amp; habitat</button> : species.habitatDetail || 'Rivers & reed ponds'}
+              <button type="button" onClick={() => focusSection('species-information')} className="font-semibold text-[#154212] underline">Identification &amp; habitat</button>
             </span>
           </div>
         </div>
@@ -171,10 +154,10 @@ export const SpeciesDetailScreen: React.FC<SpeciesDetailScreenProps> = ({
           </div>
           <div className="mt-2">
             <span className="text-[20px] font-medium text-[#181c20] block leading-tight">
-              {species.source ? 'Unverified' : species.bestTime || '06:30 – 08:30'}
+              Varies by site
             </span>
             <span className="text-[12px] text-[#42493e]">
-              {species.source ? <button type="button" onClick={() => focusSection('photography-planning')} className="font-semibold text-[#154212] underline">Timing &amp; access</button> : species.bestTimeDetail || 'Optimal low angle glare'}
+              <button type="button" onClick={() => focusSection('photography-planning')} className="font-semibold text-[#154212] underline">Timing &amp; access</button>
             </span>
           </div>
         </div>
@@ -188,12 +171,12 @@ export const SpeciesDetailScreen: React.FC<SpeciesDetailScreenProps> = ({
           <div className="mt-2">
             <div className="flex flex-wrap items-baseline gap-1">
               <span className="text-[20px] font-medium text-[#181c20]">
-                {species.source ? species.recentObservations?.length ? 'Reported' : 'Unavailable' : species.sightingsThisWeek ?? 0}
+                {species.recentObservations?.length ? 'Reported' : 'None'}
               </span>
-              <span className="text-[12px] text-[#42493e]">{species.source ? 'past 14 days' : 'this week'}</span>
+              <span className="text-[12px] text-[#42493e]">past 14 days</span>
             </div>
             <span className="text-[12px] text-[#3b6934] font-medium truncate block">
-              {species.coverageLabel || species.region || 'Delhi-NCR region'}
+              {region}
             </span>
           </div>
         </div>
@@ -206,14 +189,9 @@ export const SpeciesDetailScreen: React.FC<SpeciesDetailScreenProps> = ({
           </div>
           <div className="mt-2">
             <span className="text-[20px] font-medium text-[#181c20] block leading-tight">
-              {species.photographyDifficulty || (species.source ? 'Unrated' : 'Medium')}
+              {species.photographyDifficulty || 'Shot tips'}
             </span>
-            {species.source && <button type="button" onClick={() => focusSection('photography-planning')} className="min-h-11 text-left text-[12px] font-semibold text-[#154212] underline">Motion, light &amp; gear</button>}
-            {!species.source && <div className="flex items-center gap-1 mt-1">
-              <span className="w-3 h-1.5 rounded-full bg-[#904d00]"></span>
-              <span className="w-3 h-1.5 rounded-full bg-[#904d00]"></span>
-              <span className="w-3 h-1.5 rounded-full bg-[#e0e3e8]"></span>
-            </div>}
+            <button type="button" onClick={() => focusSection('photography-planning')} className="min-h-11 text-left text-[12px] font-semibold text-[#154212] underline">Motion, light &amp; gear</button>
           </div>
         </div>
       </div>
@@ -233,8 +211,8 @@ export const SpeciesDetailScreen: React.FC<SpeciesDetailScreenProps> = ({
 
         <button
           type="button"
-          aria-controls={species.source ? 'photography-planning' : undefined}
-          onClick={() => species.source ? focusSection('photography-planning') : showToast(`Suggested early morning session for ${species.name}. Trip saving is not connected yet.`)}
+          aria-controls="photography-planning"
+          onClick={() => focusSection('photography-planning')}
           className="flex-1 h-12 rounded-lg bg-[#2d5a27] text-white font-semibold text-[13px] flex items-center justify-center gap-2 shadow-sm hover:opacity-95 active:scale-[0.98] transition-all"
         >
           <span className="material-symbols-outlined text-[18px]">add_a_photo</span>
@@ -250,214 +228,41 @@ export const SpeciesDetailScreen: React.FC<SpeciesDetailScreenProps> = ({
               <span className="material-symbols-outlined text-[16px]">tips_and_updates</span>
             </div>
             <h3 className="text-[17px] min-[360px]:text-[18px] leading-tight font-medium text-[#181c20]">Field Guide & Technique</h3>
-            {species.source && onToggleSubscription && <InformationDisclosure className="reference-info-inline ml-auto" label="Species alerts">      {species.source&&onToggleSubscription&&<button type="button" aria-pressed={subscribed} onClick={onToggleSubscription} className="mx-4 mt-2 min-h-11 rounded-xl bg-white text-[#154212] text-[13px] font-semibold">{subscribed?'Unsubscribe from species alerts':'Subscribe to species alerts'}</button>}</InformationDisclosure>}
+            {onToggleSubscription && <button type="button" aria-pressed={subscribed} aria-label={subscribed ? 'Unsubscribe from species alerts' : 'Subscribe to species alerts'} title={subscribed ? 'Alerts on for this bird' : 'Get alerts for this bird'} onClick={onToggleSubscription} className={`ml-auto w-11 h-11 -my-2 shrink-0 rounded-full flex items-center justify-center ${subscribed ? 'text-[#904d00]' : 'text-[#42493e]'} hover:bg-[#ebeef3]`}><span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: subscribed ? "'FILL' 1" : "'FILL' 0" }}>{subscribed ? 'notifications_active' : 'notifications'}</span></button>}
           </div>
-          <details id="photography-planning" tabIndex={-1} aria-label="Field Guide and Technique" className="text-[13px] text-[#42493e]"><summary className="min-h-11 flex items-center cursor-pointer font-semibold">Species information and photography evidence</summary>
-          {species.source && <SpeciesInfoPanel key={species.id} speciesId={species.id} onSessionExpired={onSessionExpired} />}
-          {species.source ? <PhotoPlanning key={`planning-${species.id}`} region={species.region} seasonalContext={species.seasonalContext} speciesName={species.name} speciesId={species.id} state={photoState} onSessionExpired={onSessionExpired} onChooseHotspot={() => focusSection('sightings-sheet-anchor')} /> : <p className="text-[13px] text-[#42493e] leading-relaxed">
-            {species.fieldGuideNotes ||
-              '400mm+ recommended. Kingfishers dive rapidly from low perches; maintain shutter speed at 1/2000s or faster in morning light. Look for regular fishing perches 1–2 meters above stagnant river channels.'}
-          </p>}
+          <details id="photography-planning" tabIndex={-1} aria-label="Field Guide and Technique" className="text-[13px] text-[#42493e]"><summary className="min-h-11 flex items-center cursor-pointer font-semibold">About this bird and how to photograph it</summary>
+          <SpeciesInfoPanel key={species.id} speciesId={species.id} onSessionExpired={onSessionExpired} />
+          <PhotoPlanning key={`planning-${species.id}`} region={species.region} seasonalContext={species.seasonalContext} speciesName={species.name} speciesId={species.id} state={photoState} onSessionExpired={onSessionExpired} onChooseHotspot={() => focusSection('sightings-sheet-anchor')} />
 
           </details>
 
-          <SpeciesRecording key={`recording-${species.id}`} speciesId={species.source ? species.id : undefined} onSessionExpired={onSessionExpired} />
+          <SpeciesRecording key={`recording-${species.id}`} speciesId={species.id} onSessionExpired={onSessionExpired} />
         </div>
       </div>
 
-      {!species.source && <>
-      {/* Recent Gallery Strip */}
-      <div className="px-4 pb-5">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-[16px] font-bold text-[#181c20]">Community Field Captures</h3>
-          <span className="text-[11px] font-semibold text-[#42493e]">32 uploads</span>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          <div className="aspect-square rounded-xl overflow-hidden bg-[#ebeef3] shadow-xs">
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYO5LOV6gmKDcdxCIWn5WKufgXF7kreErhzDHQSnCIaa9WCrsQnKm5Z-_O5Lr104sF6JSYAk2-rkCNMBthC5rYxKAm-TRJU4WNMhZZL5ehKbu9mvpuAzAtuaWuORx3Wdr5PjIHb2drSYsyj-W89Yq9NboLQoD6iNqtcjTm9Df595AcPy-zOCj4iJOiWV2wNkf8Hu5vINPpA6qqA7p2q3gyweiWjOEzo4T_q0sfFbgNnorYzgPpk5xT8g"
-              alt="Kingfisher diving"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="aspect-square rounded-xl overflow-hidden bg-[#ebeef3] shadow-xs">
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrYdi2ZuF85w9c0pdJooqpUg8s9t4krk2jFPGDv6uw7aVsxPPb8XPJO9w4NtZM1BRWz9QS11be6fcwiajg8rkEDvfEl9k_51qEUR7_NWRhrJwJbqJttkG3FzZhgRm4i-fwH-tQt9LUj_BJ75sEcirBZcHCIT3cAJSWP3VDq5bP75bc5GMaYOGOR-ZQyeRGMRplfgVd19HTFQqn4bF8-h3LEINSoSw138JhllqZPrH50TIdklZKlGUU0A"
-              alt="Kingfisher with minnow"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="aspect-square rounded-xl overflow-hidden bg-[#ebeef3] relative shadow-xs">
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVTO1MxPBb9tvo5CIA5dQuUOJN4elBEI5S1PF9J7OEPlKQE0CiNUdEiWj4eLI36STG-BaycsTzdyanfH7hypmUjTDRW0oXWPVvK6XnJrBU2I05_iRK7jPuCfi994T9F3jfu3-LJZi_OkQWfviMR0t2yeuis8dr4YaQsEEKnp_WUK8xiLRwGO5Ztt4w_d1qD7Nas3cH2H2dTUKBJC82UVJyjDejJ987LIXt5qhqSIfUcalVJkyLaoBPRQ"
-              alt="Kingfisher on reed"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center text-white font-bold text-[12px]">
-              +29 more
-            </div>
-          </div>
-        </div>
-      </div>
-
-      </>}
-
-      {!species.source && <>
-      {/* Sightings & Field Map Section */}
-      <section
-        id="sightings-sheet-anchor"
-        className="w-full bg-white rounded-t-3xl shadow-md border-t border-[#f1f4f9] pt-3 pb-6 transition-all"
-      >
-        <div
-          onClick={() => setIsSightingsExpanded(!isSightingsExpanded)}
-          className="w-full px-4 pb-2 flex flex-col items-center justify-center cursor-pointer select-none"
-        >
-          <div className="w-10 h-1.5 bg-[#e0e3e8] rounded-full mb-3"></div>
-          <div className="w-full flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#2d5a27]"></span>
-                <h3 className="text-[17px] font-bold text-[#181c20]">Sightings & Field Map</h3>
-              </div>
-              <p className="text-[11px] text-[#42493e]">
-                Logged coords in Delhi-NCR (past 7 days)
-              </p>
-            </div>
-            <button
-              aria-label="Toggle sightings sheet"
-              className="w-8 h-8 rounded-full bg-[#ebeef3] flex items-center justify-center text-[#42493e]"
-            >
-              <span
-                className={`material-symbols-outlined text-[20px] transition-transform ${
-                  isSightingsExpanded ? 'rotate-180' : ''
-                }`}
-              >
-                expand_more
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {isSightingsExpanded && (
-          <div className="px-4 pt-2 space-y-3">
-            {/* Visual map preview */}
-            <div className="relative w-full h-44 rounded-xl overflow-hidden bg-[#ebeef3] shadow-inner">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLleV9fLCzYR8V5eZzMFUDF_DDa2p5Y4odVcNeDwXKD8Jn1Zg7s4Vn4hDJwnQ-OzZwVv3J76aTJ7_63xFKt7ORzxtN8oLXe5DGtpoEmz4U71YDB7c45F0H3DH1zledFONKorO_59-M-7oQmS9ZDE19054qz1E0ZymqcqGNKUgLeitM3Ce1mE-F6e0-0CabFEAGpW8ojqwBIANkj1bl5sh33esmFDjY7fw4tEm5b2XkY-R-KZ6IbQr4zg"
-                alt="Sightings Map"
-                className="w-full h-full object-cover"
-              />
-
-              {/* Hotspot pin overlays */}
-              <div className="absolute top-1/3 left-1/4 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                <div className="px-2 py-0.5 rounded-full bg-black/90 text-white text-[10px] shadow-md flex items-center gap-1 font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#904d00]"></span>
-                  <span>Yamuna Ghats (4)</span>
-                </div>
-                <span className="material-symbols-outlined text-[#904d00] text-[22px] drop-shadow">
-                  location_on
-                </span>
-              </div>
-
-              <div className="absolute bottom-1/4 right-1/3 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                <div className="px-2 py-0.5 rounded-full bg-[#2d5a27] text-white text-[10px] shadow-md flex items-center gap-1 font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
-                  <span>Okhla Sanctuary (8)</span>
-                </div>
-                <span className="material-symbols-outlined text-[#2d5a27] text-[24px] drop-shadow">
-                  location_on
-                </span>
-              </div>
-
-              <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/75 text-white text-[10px] font-semibold">
-                Updated 3h ago
-              </div>
-            </div>
-
-            {/* Coordinates List */}
-            <div className="space-y-2">
-              <div className="p-3 rounded-xl bg-[#f1f4f9] flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#e0e3e8] flex items-center justify-center text-[#3b6934]">
-                    <span className="material-symbols-outlined text-[20px]">water</span>
-                  </div>
-                  <div>
-                    <div className="text-[13px] font-bold text-[#181c20]">
-                      Okhla Bird Sanctuary
-                    </div>
-                    <div className="text-[11px] text-[#42493e] font-mono">
-                      28.5632° N, 77.3089° E
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[11px] font-bold text-[#181c20]">Today 06:45</div>
-                  <div className="text-[11px] text-[#3b6934] font-semibold">3 individuals</div>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#f1f4f9] flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#e0e3e8] flex items-center justify-center text-[#904d00]">
-                    <span className="material-symbols-outlined text-[20px]">kayaking</span>
-                  </div>
-                  <div>
-                    <div className="text-[13px] font-bold text-[#181c20]">
-                      Yamuna Bio-Diversity Park
-                    </div>
-                    <div className="text-[11px] text-[#42493e] font-mono">
-                      28.7183° N, 77.2144° E
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[11px] font-bold text-[#181c20]">Yesterday</div>
-                  <div className="text-[11px] text-[#904d00] font-semibold">Active plunge dive</div>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => onQuickLog(species)}
-              className="w-full h-11 rounded-xl bg-[#ebeef3] hover:bg-[#e0e3e8] text-[#181c20] font-semibold text-[13px] flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
-            >
-              <span className="material-symbols-outlined text-[18px]">edit_location</span>
-              <span>LOG YOUR SIGHTING HERE</span>
-            </button>
-          </div>
-        )}
-      </section>
-      </>}
-      {species.source && <ReferenceComparisons key={`gallery-${species.id}`} speciesId={species.id} gallery onSessionExpired={onSessionExpired} />}
-      {species.source && (
-        <section id="sightings-sheet-anchor" tabIndex={-1} className="w-full rounded-t-3xl border-t border-[#f1f4f9] bg-white pt-3 pb-6 text-[13px] text-[#42493e] shadow-md">
+      <ReferenceComparisons key={`gallery-${species.id}`} speciesId={species.id} gallery onSessionExpired={onSessionExpired} />
+      <section id="sightings-sheet-anchor" tabIndex={-1} className="w-full rounded-t-3xl border-t border-[#f1f4f9] bg-white pt-3 pb-6 text-[13px] text-[#42493e] shadow-md">
           <div aria-hidden="true" className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[#e0e3e8]" />
           <button type="button" aria-expanded={isSightingsExpanded} aria-controls="species-reported-hotspots" onClick={() => setIsSightingsExpanded((value) => !value)} className="flex min-h-11 w-full items-center justify-between gap-2 px-4 text-left">
-            <span><span className="block text-[17px] min-[360px]:text-[18px] font-medium text-[#181c20]">Sightings &amp; Field Map</span><span className="text-[11px]">Reported hotspots · past 14 days</span></span>
+            <span><span className="block text-[17px] min-[360px]:text-[18px] font-medium text-[#181c20]">Sightings &amp; Field Map</span><span className="text-[11px]">Where it was reported · past 14 days</span></span>
             <span aria-hidden="true" className={`material-symbols-outlined text-[20px] ${isSightingsExpanded ? 'rotate-180' : ''}`}>expand_more</span>
           </button>
           {isSightingsExpanded && <div id="species-reported-hotspots" className="px-4 pt-2">
             {locations && mappedHotspots.length > 0 && <HotspotMap hotspots={mappedHotspots} frameClassName="hotspot-map-compact aspect-[337/166]" label={`Reported hotspots for ${species.name}`} onOpen={onSelectHotspotById} />}
-            <div className="mt-2 flex items-start gap-1">
-              {locations && locations.locations.length > 0 && <p className="flex-1 text-[12px]">{mappedHotspots.length} of {locations.locations.length} reported hotspots have coordinates in the loaded catalogue. All reports remain listed below.</p>}
-              <InformationDisclosure label="Sighting sources and map limits" className="ml-auto"><p>Latest report at each matching hotspot in {species.coverageLabel || species.region || 'the loaded region'}, within 14 days. Select a location for its map, weather and directions. Reports do not guarantee a sighting; the reported point is not a verified entrance.</p>
-              {locations && <p className="mt-2 text-[11px]">Retrieved {new Date(locations.fetchedAt).toLocaleString()}{locations.cached ? ' (cached)' : ''}. Observation times below are local to the location.</p>}</InformationDisclosure>
-            </div>
+            {locations && locations.locations.length > 0 && <p className="mt-2 text-[12px]">Tap a place for its map, weather and directions.{mappedHotspots.length < locations.locations.length ? ` ${mappedHotspots.length} of ${locations.locations.length} places are shown on the map.` : ''}</p>}
             {!locations && !locationsError && <p role="status" className="mt-2">Loading locations for {species.name}...</p>}
             {locationsError && <div role="alert" className="mt-2"><p>{locationsError}</p><button type="button" onClick={onRetryLocations} className="mt-2 font-semibold text-[#154212] underline">Try again</button></div>}
-            {locations?.locations.length === 0 && <p className="mt-2">No recent reports at hotspots in the loaded region. This does not establish that the species is absent.</p>}
+            {locations?.locations.length === 0 && <p className="mt-2">No recent reports at hotspots{region ? ` in ${region}` : ''} in the past 14 days.</p>}
             {locations?.locations.map((location) => (
               <button type="button" key={location.hotspotId} aria-label={`Open hotspot ${location.name}`} onClick={() => onSelectHotspotById?.(location.hotspotId)} className="mt-2 w-full rounded-xl bg-[#f1f4f9] p-3 text-left hover:bg-[#ebeef3]">
                 <span className="block font-semibold text-[#181c20]">{location.name}</span>
-                <span className="block text-[12px]">{location.coordinates} - {location.observedAt}</span>
-                <span className="block text-[12px]">{location.count === null ? 'Individual count unavailable' : `${location.count} individuals reported`}</span>
+                <span className="block text-[12px]">{fieldTime(location.observedAt)}{location.count === null ? '' : ` · ${location.count} ${location.count === 1 ? 'bird' : 'birds'}`}</span>
               </button>
             ))}
             <a href={species.sourceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-block font-semibold text-[#154212] underline">View species on eBird</a>
             <button type="button" onClick={() => onQuickLog(species)} className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#2d5a27] text-[13px] font-semibold text-white"><span aria-hidden="true" className="material-symbols-outlined text-[18px]">edit_location</span>LOG YOUR SIGHTING</button>
           </div>}
         </section>
-      )}
 
     </div>
   );

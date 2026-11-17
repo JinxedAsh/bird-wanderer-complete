@@ -30,15 +30,15 @@ export function ObservationConditionsPanel({ point, observedAt, utcOffset, disab
   return <section className="bg-[#f1f4f9] p-3.5 rounded-xl mb-4 space-y-2 text-[12px]">
     <div className="flex items-center justify-between gap-2">
       <h3 className="text-[18px] font-medium">Conditions</h3>
-      <span className="text-[10px] text-[#42493e]">Historical estimate</span>
-      <InformationDisclosure label="Weather source, privacy and options">
-        <p>Only coordinates rounded to 0.1° (roughly 11 km latitude), date and time are sent to Open-Meteo. No photograph or account identity is sent. Weather models are not verified measurements at your camera.</p>
-        {data && <><p>Rain {data.precipitationMm ?? 'Unavailable'} mm. {data.model} · hour {data.matchedTime} ({data.timezone}). {data.timeBasis}. Retrieved {data.fetchedAt}.</p><a href={data.sourceUrl} target="_blank" rel="noreferrer" className="underline">Open-Meteo · CC BY 4.0 · source and methodology</a></>}
+      <span className="text-[10px] text-[#42493e]">Estimated</span>
+      <InformationDisclosure label="Weather source and options">
+        <p>Weather for the hour and area of your sighting, estimated by <a href={data?.sourceUrl || 'https://open-meteo.com/'} target="_blank" rel="noreferrer" className="underline">Open-Meteo</a> (CC BY 4.0). Only a rounded position (about 11 km), the date and the time are sent. Your photo and account are never sent.</p>
+        {data && data.precipitationMm != null && <p>Rain: {data.precipitationMm} mm.</p>}
         {key && !disabled && <div className="flex flex-wrap gap-x-4"><button type="button" className="min-h-11 underline" onClick={() => { setSkipped(false); setAttempt(value => value + 1); }}>Retry conditions</button><button type="button" className="min-h-11 underline" onClick={() => { setSkipped(true); callbacks.current.onChange(null); }}>Save without conditions</button></div>}
       </InformationDisclosure>
     </div>
-    {!key && <p>Choose a location and observation date/time to look up conditions.</p>}
-    {key && loading && <p role="status">Loading conditions for the selected place and time… You can save without them.</p>}
+    {!key && <p>Choose a location, date and time to add the weather.</p>}
+    {key && loading && <p role="status">Loading the weather for that place and time… You can save without it.</p>}
     {error && <div role="alert"><p>{error}</p>{!disabled && <button type="button" className="min-h-11 underline" onClick={() => { setSkipped(false); setAttempt(value => value + 1); }}>Retry conditions</button>}</div>}
     {data && <div role="status" className="grid grid-cols-4 gap-2 text-center">
       {[
@@ -46,6 +46,6 @@ export function ObservationConditionsPanel({ point, observedAt, utcOffset, disab
         ['Wind', data.windKmh, ' km/h'], ['Humidity', data.humidityPercent, '%'],
       ].map(([label, value, unit]) => <div key={label} className="min-w-0 rounded-lg bg-white p-2"><div className="text-[10px] text-[#42493e]">{label}</div><div title={value == null ? 'Unavailable' : `${value}${unit}`} aria-label={`${label}: ${value == null ? 'Unavailable' : `${value}${unit}`}`} className="mt-1 font-semibold break-words">{value == null ? '—' : `${value}${unit}`}</div></div>)}
     </div>}
-    {skipped && <p role="status">Conditions omitted. You can save the observation without weather.</p>}
+    {skipped && <p role="status">Weather left out. You can still save the observation.</p>}
   </section>;
 }

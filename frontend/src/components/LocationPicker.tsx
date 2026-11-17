@@ -21,9 +21,9 @@ export function LocationPicker({ location, onSelect, onClose }: LocationPickerPr
       if (requestId.current === id) setError(failure instanceof Error ? failure.message : 'Location is unavailable.');
     } finally { if (requestId.current === id) setBusy(false); }
   };
-  return <section aria-label="Choose discovery location" className="mx-4 mt-3 rounded-xl bg-white p-3 text-[12px] text-[#42493e] border border-[#e0e3e8]">
-    <div className="flex items-center justify-between"><h3 className="font-bold">Discovery location</h3><button type="button" onClick={onClose} className="underline">Close</button></div>
-    <p className="mt-2">Optional: distances use your selected point. Weather sends rounded coordinates to Open-Meteo through our server. The location is not saved to your account.</p>
+  return <section aria-label="Choose your location" className="mx-4 mt-3 rounded-xl bg-white p-3 text-[12px] text-[#42493e] border border-[#e0e3e8]">
+    <div className="flex items-center justify-between"><h3 className="font-bold">Your location</h3><button type="button" onClick={onClose} className="underline">Close</button></div>
+    <p className="mt-2">Optional. Used to show nearby birds, distances and local weather. Your location is not saved to your account, and only a rounded position is used for the weather lookup.</p>
     <button type="button" disabled={busy} onClick={useGps} className="my-2 rounded-lg bg-[#154212] px-3 py-2 text-white disabled:opacity-50">{busy ? 'Waiting for location…' : 'Use device location'}</button>
     <form onSubmit={(event) => {
       event.preventDefault();
@@ -38,6 +38,6 @@ export function LocationPicker({ location, onSelect, onClose }: LocationPickerPr
       <button type="submit" className="mt-2 font-semibold underline">Use coordinates</button>
     </form>
     {error && <p role="alert" className="mt-2 text-[#904d00]">{error}</p>}
-    {location && <button type="button" onClick={() => { requestId.current++; onSelect(null); onClose(); }} className="mt-2 underline">Clear location and return to region</button>}
+    {location && <button type="button" onClick={() => { requestId.current++; onSelect(null); onClose(); }} className="mt-2 underline">Clear location</button>}
   </section>;
 }

@@ -1,6 +1,6 @@
 # Bird Wanderer — full-project completion plan
 
-Updated 26 October 2026. The user authorized the full development cycle on23 October 2026; this supersedes the previous Phase-1-only increment and Android deferral. Live SRS re-read through Drive on 26 October; the current evidence boundaries are recorded in Entry47. Preserve final designs and React/Express/SQLite architecture. No paid services or invented evidence. Original 20 October deadline is historical; no new deadline is assumed.
+Updated 26 October 2026. The full development cycle was authorized on 23 October 2026; this supersedes the previous Phase-1-only increment and Android deferral. Live SRS re-read through Drive on 26 October; the current evidence boundaries are recorded in Entry47. Preserve final designs and React/Express/SQLite architecture. No paid services or invented evidence. Original 20 October deadline is historical; no new deadline is assumed.
 
 ## Current delivery
 
@@ -24,7 +24,7 @@ Release reliability #35 is delivered: offline database/media backup/verify, actu
 
 ## Working rules and verification
 
-One writer updates code/docs; Test chat performs authorized independent browser checks. Focused branches/PRs, no assistant-name prefix. Preserve unrelated launcher rename. Do not commit .env, user data/media, credentials, databases or generated builds. Each delivered slice appends a dated Development Record entry and updates this matrix without rewriting historical evidence.
+One developer updates code/docs; a separate tester performs independent browser checks. Use focused branches/PRs. Preserve unrelated launcher rename. Do not commit .env, user data/media, credentials, databases or generated builds. Each delivered slice appends a dated Development Record entry and updates this matrix without rewriting historical evidence.
 
 Screen -> request -> backend -> storage -> result examples will accompany each slice. Test missing/bad inputs and account ownership before happy-path screenshots. Real provider outage, push dispatch and physical-device claims require actual evidence; controlled fixtures are labelled.
 

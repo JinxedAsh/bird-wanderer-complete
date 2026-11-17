@@ -4,7 +4,7 @@ Implemented 4 October 2026, Development Record Entry 18. This increment extracts
 
 ## What changed for the user
 
-Open a real species detail page. Its photo badge reports loading, source EXIF available or source EXIF unavailable. Beneath the photo attribution, **Reference Photo EXIF** shows camera make/model, lens, shutter speed, aperture, ISO, focal length and capture time when the source file has valid fields. Partial records display **Unavailable** for each missing field. A file without supported fields explains that metadata may be absent, stripped or unreadable.
+Open a real species detail page. Its photo badge reports loading, “Camera settings available” or “No camera settings”. Beneath the photo credit, **Camera settings for this photo** shows camera make/model, lens, shutter speed, aperture, ISO, focal length and capture time when the source file has valid fields. Partial records show “—” for each missing field. A file without supported fields says the photo has no camera settings saved with it.
 
 The panel describes settings recorded for that photograph. It does not claim they are optimal, independently verified, from a recent observation or from the selected hotspot. EXIF can be edited. Older/captive reference photos remain valid illustrations, but their metadata is not current bird-activity evidence.
 

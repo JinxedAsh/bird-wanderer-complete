@@ -32,7 +32,7 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({
   const pending=useRef(false);
   const act=async(change:()=>Promise<boolean|undefined>,success:string)=>{
     if(pending.current)return;pending.current=true;setBusy(true);setActionError('');
-    try{if(await change())showToast(success);else setActionError('The change was not confirmed. Check your connection and retry.');}
+    try{if(await change())showToast(success);else setActionError('That did not go through. Check your connection and try again.');}
     catch(error){setActionError(error instanceof Error?error.message:'The change was not saved. Please retry.');}
     finally{pending.current=false;setBusy(false);}
   };
@@ -84,7 +84,7 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({
 
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-1">
-              <span className="text-[32px] font-bold text-[#181c20] leading-none">{totals?.tripsCount??new Set(entries.map(entry => entry.date.slice(0,10) + ':' + entry.location)).size}</span>
+              <span className="text-[32px] font-bold text-[#181c20] leading-none">{totals?.tripsCount??new Set(entries.map(entry => entry.date.split(',')[0] + ':' + entry.location)).size}</span>
               <span className="material-symbols-outlined text-[#20402b] text-[18px]">explore</span>
             </div>
             <span className="text-[12px] font-semibold text-[#42493e] mt-1">Trips</span>
@@ -153,7 +153,7 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({
                 </div>
                 <div className="flex items-center justify-between pt-1.5 mt-1 border-t border-[#f1f4f9]">
                   <span className="text-[10px] text-[#72796e] truncate">
-                    {entry.date.split('·')[0].trim()}
+                    {entry.date.split(',')[0]}
                   </span>
                   <span className="material-symbols-outlined text-[#154212] text-[15px]">
                     visibility
@@ -177,7 +177,7 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({
             </div>
             <div className="flex items-center gap-1 text-[#42493e]">
               <span className="material-symbols-outlined text-[18px]">photo_camera_back</span>
-              <span title={`Entry ${activeEntry.id}`} className="text-[11px] font-semibold">Entry #{activeEntry.id.slice(0, 8)}</span>
+              <span className="text-[11px] font-semibold">Entry #{String(Math.max((totals?.photosCount ?? entries.length) - entries.indexOf(activeEntry), 1)).padStart(3, '0')}</span>
             </div>
           </div>
 
@@ -198,7 +198,7 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({
                 </span>
               </div>
               <span className="bg-white/20 backdrop-blur-md text-white px-2 py-0.5 rounded text-[10px] font-semibold flex items-center gap-1">
-                <span className="material-symbols-outlined text-[13px]">person</span> User reported
+                <span className="material-symbols-outlined text-[13px]">person</span> Your sighting
               </span>
             </div>
           </div>
@@ -257,7 +257,7 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({
                 </span>
                 <span className="text-[12px] font-bold text-[#181c20] truncate block">
                   {activeEntry.weather}
-                  {activeEntry.weatherSourceUrl && <a href={activeEntry.weatherSourceUrl} target="_blank" rel="noreferrer" className="block min-h-11 underline">Open-Meteo source and methodology</a>}
+                  {activeEntry.weatherSourceUrl && <a href={activeEntry.weatherSourceUrl} target="_blank" rel="noreferrer" className="block min-h-11 underline">Weather data: Open-Meteo (CC BY 4.0)</a>}
                 </span>
               </div>
             </div>
@@ -269,9 +269,9 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#42493e] flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">edit_note</span> Field Notes
               </span>
-              <span className="text-[10px] text-[#154212] font-bold bg-[#bcf0ae] px-1.5 py-0.5 rounded">
+              {activeEntry.habitatTag && <span className="text-[10px] text-[#154212] font-bold bg-[#bcf0ae] px-1.5 py-0.5 rounded">
                 {activeEntry.habitatTag}
-              </span>
+              </span>}
             </div>
             <p className="text-[13px] text-[#181c20] leading-relaxed [overflow-wrap:anywhere]">{activeEntry.notes}</p>
           </div>
